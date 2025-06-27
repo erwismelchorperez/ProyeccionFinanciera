@@ -55,7 +55,7 @@ Pruebas = financialdata.getPruebas()
 Validation = financialdata.getValidation()
 
 ##########################################################
-cuenta_objetivo = 'Cartera de crdito vigente'#, Disponibilidades, CAJA, Cartera de crdito vigente ->archivo Gaby
+cuenta_objetivo = 'Disponibilidades'#, Disponibilidades, CAJA, Cartera de crdito vigente ->archivo Gaby
 #cuenta_objetivo = 'DISPONIBILIDADES'#, , CAJA
 Entrenamiento = Entrenamiento[['FECHA', cuenta_objetivo]]
 Pruebas = Pruebas[['FECHA', cuenta_objetivo]]
@@ -71,7 +71,7 @@ Validation[cuenta_objetivo] = pd.to_numeric(Validation[cuenta_objetivo], errors=
 Validation[cuenta_objetivo] = Validation[cuenta_objetivo].round(2)
 
 # Definimos la ventana de meses para usar como input
-flag_ventana = True  # <- CAMBIA AQUÍ según lo necesites
+flag_ventana = False  # <- CAMBIA AQUÍ según lo necesites
 ventana = 3          # tamaño de la ventana
 
 print(Entrenamiento)
@@ -82,7 +82,7 @@ if flag_ventana:
     X_train, y_train = financialdata.crear_dataset_supervisado(serie_train, ventana, reshape_3d=usar_datos_3d)
 
     # Para probar, usamos los 3 últimos valores de entrenamiento + primeros de test
-    serie_completa = np.concatenate([Entrenamiento[cuenta_objetivo].values[-ventana:], 
+    serie_completa = np.concatenate([Entrenamiento[cuenta_objetivo].values[-ventana:],
                                     Pruebas[cuenta_objetivo].values])
     X_test, y_test = financialdata.crear_dataset_supervisado(serie_completa, ventana, reshape_3d=usar_datos_3d)
 
@@ -114,7 +114,7 @@ if not flag_ventana:
 
 model_scores = {}
 viz = FinancialVisualizer()
-
+rows = []
 for name, model_obj in models.items():
     print(f"Entrenando {name}...")
     if 'PSO' in name:
@@ -123,14 +123,14 @@ for name, model_obj in models.items():
     else:
         best_model = model_obj.train(X_train, y_train)
         results = model_obj.evaluate(best_model, X_test, y_test)
-    
+
     model_scores[name] = results
-    
+
     if not flag_ventana:
         y_test = y_test.reshape(-1).astype(float)
         model_scores[name]['y_true'] = model_scores[name]['y_true'].reshape(-1).astype(float)
-    print("Real 2022:           ",y_test)
-    print("Predicho 2022:       ",results['y_pred'])
+    print("Real         2024:       ",y_test)
+    print("Predicho     2024:       ",results['y_pred'])
     viz.plot_predictions(fechas_test, y_test, results['y_pred'], title=f"{name} - Real vs Predicho", save_path=f"plots/{name}_pred_vs_real.png")
 
     #############
@@ -145,17 +145,19 @@ for name, model_obj in models.items():
     if 'LSTM' in name and flag_ventana:
         historial_inicial = historial_inicial.reshape(ventana, 1)
 
-    meses_a_predecir = 6
+    meses_a_predecir = 3
     if len(serie_validation) < meses_a_predecir:
         serie_validation = np.pad(serie_validation, (0, meses_a_predecir - len(serie_validation)), mode='constant', constant_values=0)
-    # Predecimos 12 meses del año 2023
+    # Predecimos 12 meses del año 2025
     pred_2023 = model_obj.predecir_futuro(best_model, historial_inicial, meses_a_predecir=meses_a_predecir, flag_ventana = flag_ventana)
-    # Crear fechas para 2023
+    # Crear fechas para 2025
     fechas_2023 = pd.date_range(start='2025-01-01', periods=meses_a_predecir, freq='M').strftime('%b-%y')
     # Graficar
     #viz.plot_predictions(fechas_2023, [np.nan]*meses_a_predecir, pred_2023, title="Predicción 2023", save_path=f"plots/{name}_prediccion_2023.png")# esto es de manera general
-    print("Validation           ",serie_validation)
-    print("Prediction           ",pred_2023)
+    print("Validation           ",serie_validation, "       ", type(serie_validation))
+    print("Prediction           ",pred_2023, "       ", type(pred_2023))
+    rows.append(financialdata.PredichoRealDiferencia(name, serie_validation, pred_2023))
+    # vamos a crear una nueva función para construir
     viz.plot_predictions(fechas_2023, serie_validation, pred_2023, title="Predicción 2025", save_path=f"plots/{name}_prediccion_2025.png")# esto es de la fecha del 2025, prediciendo los 3 primeros meses
 
 
@@ -163,10 +165,11 @@ print(model_scores)
 viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos.png")
 viz.plot_model_errors(model_scores, save_path="plots/errores_comparados.png")
 viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados.png")
-
+########################
+df = pd.DataFrame(rows)
+df.to_csv("./plots/validacionmodelo.csv", index=False)
 
 # Métricas finales
 print("Resumen de métricas:")
 for name, score in model_scores.items():
     print(f"{name}: MSE={score['MSE']:.2f}, R²={score['R2']:.3f}")
-
