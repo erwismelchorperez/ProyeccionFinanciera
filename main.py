@@ -71,7 +71,7 @@ Validation[cuenta_objetivo] = pd.to_numeric(Validation[cuenta_objetivo], errors=
 Validation[cuenta_objetivo] = Validation[cuenta_objetivo].round(2)
 
 # Definimos la ventana de meses para usar como input
-flag_ventana = False  # <- CAMBIA AQUÍ según lo necesites
+flag_ventana = True  # <- CAMBIA AQUÍ según lo necesites
 ventana = 3          # tamaño de la ventana
 
 print(Entrenamiento)
@@ -158,16 +158,16 @@ for name, model_obj in models.items():
     print("Prediction           ",pred_2023, "       ", type(pred_2023))
     rows.append(financialdata.PredichoRealDiferencia(name, serie_validation, pred_2023))
     # vamos a crear una nueva función para construir
-    viz.plot_predictions(fechas_2023, serie_validation, pred_2023, title="Predicción 2025", save_path=f"plots/{name}_prediccion_2025.png")# esto es de la fecha del 2025, prediciendo los 3 primeros meses
+    viz.plot_predictions(fechas_2023, serie_validation, pred_2023, title="Predicción 2025", save_path=f"plots/{name}_prediccion_2025_"+str(flag_ventana)+".png")# esto es de la fecha del 2025, prediciendo los 3 primeros meses
 
 
 print(model_scores)
-viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos.png")
-viz.plot_model_errors(model_scores, save_path="plots/errores_comparados.png")
-viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados.png")
+viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos_"+str(flag_ventana)+".png")
+viz.plot_model_errors(model_scores, save_path="plots/errores_comparados_"+str(flag_ventana)+".png")
+viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados_"+str(flag_ventana)+".png")
 ########################
 df = pd.DataFrame(rows)
-df.to_csv("./plots/validacionmodelo.csv", index=False)
+df.to_csv("./plots/validacionmodelo_"+str(flag_ventana)+".csv", index=False)
 
 # Métricas finales
 print("Resumen de métricas:")

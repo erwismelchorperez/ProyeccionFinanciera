@@ -15,13 +15,6 @@ def PredichoRealDiferencia(model, validacion, prediccion):
         fila['MP'+str(i)] = prediccion[i]
         fila['diff'+str(i)] = diferencia[i]
 
-        #fila.append(prediccion[i])
-        #fila.append(validacion[i])
-        #fila.append(diferencia[i])
-    print(prediccion)
-    print(validacion)
-    print(diferencia)
-    print(fila)
 
 validacion = np.array([24108153, 19799516,22218738])
 prediccion = np.array([19284923.,19284923.,19284923.])
