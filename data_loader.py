@@ -76,6 +76,17 @@ class FinancialDataLoader:
             else:
                 array = array.astype(float)
         return np.round(array, decimales)
+    def PredichoRealDiferencia(self, model, validacion, prediccion):
+        diferencia = np.zeros(len(validacion))
+        fila = {}
+        fila['modelo'] = model
+        for i in range(len(validacion)):
+            diferencia[i] = validacion[i] - prediccion[i]
+            fila['MR'+str(i)] = validacion[i]
+            fila['MP'+str(i)] = prediccion[i]
+            fila['diff'+str(i)] = diferencia[i]
+        return fila
+
     # get/set
     def getDataset(self):
         return self.datasetfiltrado
@@ -85,4 +96,3 @@ class FinancialDataLoader:
             return self.Pruebas
     def getValidation(self):
             return self.Validation
-            
