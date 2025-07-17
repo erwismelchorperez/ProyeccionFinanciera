@@ -14,8 +14,7 @@ from models.hyperparameter_xgb import HyperparameterXGBoost, HyperparameterXGBoo
 
 import pandas as pd
 import numpy as np
-import joblib
-import os
+
 
 
 from sklearn.model_selection import train_test_split
@@ -42,8 +41,6 @@ models = {
     "RidgePSO": HyperparameterRidge_PSO(),
     "XGBoost": HyperparameterXGBoost(),
     "XGBoostPSO": HyperparameterXGBoost_PSO()
-
-    # de aqui para abajo falta implementar
     #"SVR": HyperparameterSVR(),# este por el momento no se que hace se tarda mucho en el entrenamiento
     #"LSTM": HyperparameterLSTM(timesteps=3, features=1),
     #"LSTMPSO": HyperparameterLSTM_PSO(timesteps=3, features=1)
@@ -73,10 +70,6 @@ ventana = 3          # tamaño de la ventana
 
 (X_train, y_train, X_trainFinal, y_trainFinal, X_test, y_test, serie_validation) = financialdata.ProcesarDatosEntrenamientoPruebasValidaction(cuenta_objetivo, flag_ventana, ventana, any('LSTM' in name for name in models.keys()))
 print("Xtrain               \n",X_train)
-#X_train = financialdata.convertir_a_float_si_es_str(X_train, decimales=2, flag = flag_ventana)
-#y_train = financialdata.convertir_a_float_si_es_str(y_train, decimales=2, flag = flag_ventana)
-#X_test = financialdata.convertir_a_float_si_es_str(X_test, decimales=2, flag = flag_ventana)
-#y_test = financialdata.convertir_a_float_si_es_str(y_test, decimales=2, flag = flag_ventana)
 
 fechas_test = Pruebas['FECHA'].reset_index(drop=True)
 if not flag_ventana:
@@ -91,7 +84,6 @@ if not flag_ventana:
 model_scores = {}
 viz = FinancialVisualizer()
 rows = []
-tempmodels = {}
 for name, model_obj in models.items():
     print(f"Entrenando {name}...")
     if 'PSO' in name:
@@ -145,32 +137,13 @@ for name, model_obj in models.items():
     print("Prediction           ",pred_2023, "       ", type(pred_2023))
     rows.append(financialdata.PredichoRealDiferencia(name, serie_validation, pred_2023))
     # vamos a crear una nueva función para construir
-    viz.plot_predictions(fechas_2023, serie_validation, pred_2023, title="Predicción 2025", save_path=f"plots/{name}_prediccion_2025_"+str(flag_ventana)+".png")# esto es de la fecha del 2025, prediciendo los 3 primeros meses
+    viz.plot_predictions(fechas_2023, serie_validation, pred_2023, title="Predicción 2025", save_path=f"plots/{name}_prediccion_2025_"+str(flag_ventana)+"_macroeconomica.png")# esto es de la fecha del 2025, prediciendo los 3 primeros meses
+    break
 
-    tempmodels[name] = best_model
-
-# apartir de aqui vamos a guardar los primeros 3 modelos ordenados de menor a mayor
-print(tempmodels)
 print(model_scores)
-# Crear la carpeta (incluye subcarpetas si no existen)
-os.makedirs("./entidad/" + cuenta_objetivo, exist_ok=True)
-
-# Ordenar por R2 de mayor a menor
-sorted_by_r2 = dict(sorted(model_scores.items(), key=lambda x: x[1]['R2'], reverse=True))
-print(sorted_by_r2)
-
-# Mostrar resultados ordenados
-for i, (model, metrics) in enumerate(sorted_by_r2.items()):
-    if i >= 3:
-        break
-    print(f"{model}: R2 = {metrics['R2']:.4f}")
-    # Guardar cada modelo
-    joblib.dump(tempmodels[model], "./entidad/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
-
-
-viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos_"+str(flag_ventana)+".png")
-viz.plot_model_errors(model_scores, save_path="plots/errores_comparados_"+str(flag_ventana)+".png")
-viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados_"+str(flag_ventana)+".png")
+viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos_"+str(flag_ventana)+"_macroeconomica.png")
+viz.plot_model_errors(model_scores, save_path="plots/errores_comparados_"+str(flag_ventana)+"_macroeconomica.png")
+viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados_"+str(flag_ventana)+"_macroeconomica.png")
 ########################
 df = pd.DataFrame(rows)
 df.to_csv("./plots/validacionmodelo_"+str(flag_ventana)+".csv", index=False)
