@@ -31,7 +31,7 @@ class HyperparameterDT:
         X_train = self.scaler_X.fit_transform(X_train)
         y_train = self.scaler_y.fit_transform(y_train.reshape(-1, 1)).ravel()
         self.grid_search.fit(X_train, y_train)
-        return self.grid_search.best_estimator_
+        return self.grid_search.best_estimator_    
     def evaluate(self, model, X_test, y_test):
 
         X_test = self.scaler_X.transform(X_test)
