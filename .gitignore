@@ -2,8 +2,11 @@
 
 __pycache__/
 *.py[cod]
+*.log
 
 .pytest_cache/
 
 *.png
 *.pkl
+
+gitcommit
