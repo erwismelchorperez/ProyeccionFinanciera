@@ -48,8 +48,8 @@ models = {
     #"LSTM": HyperparameterLSTM(timesteps=3, features=1),
     #"LSTMPSO": HyperparameterLSTM_PSO(timesteps=3, features=1)
 }
-#financialdata = FinancialDataLoader('./dataset/Estados_FinancierosGaby_proyeccion.csv')
-financialdata = FinancialDataLoader('./dataset/Estados_FinancierosGaby.csv')
+financialdata = FinancialDataLoader('./dataset/Estados_FinancierosGaby_proyeccion.csv')
+#financialdata = FinancialDataLoader('./dataset/Estados_FinancierosGaby.csv')
 #financialdata = FinancialDataLoader('./dataset/Estados_Financieros.csv')
 # Cargar datos
 financialdata.load_data()
