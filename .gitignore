@@ -2,8 +2,13 @@
 
 __pycache__/
 *.py[cod]
+*.log
+*.csv#
 
 .pytest_cache/
 
 *.png
 *.pkl
+
+#archivo temporal
+gitcommit
