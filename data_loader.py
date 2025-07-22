@@ -15,10 +15,10 @@ class FinancialDataLoader:
         self.dataset = pd.read_csv(self.filepath)
     def ProcesarDataset(self):
         # Filtrar el dataframe con las cuentas con proyeccion 'SI' con las que vamos a entrenar los predictores de regresión
-        self.datasetfiltrado = self.dataset[self.dataset['NIVEL'] == 2]# 2 para a nivel de disponibilidades, 3 para caja
-        #self.datasetfiltrado = self.dataset[self.dataset['proyeccion'].str.strip().str.upper() == 'SI']
+        #self.datasetfiltrado = self.dataset[self.dataset['NIVEL'] == 2]# 2 para a nivel de disponibilidades, 3 para caja
+        self.datasetfiltrado = self.dataset[self.dataset['proyeccion'].str.strip().str.upper() == 'SI']
         # Mostrar cuántas filas cumplen con proyección == "SI"
-        #print(f"Filas con proyección 'SI': {len(self.datasetfiltrado)}")
+        print(f"Filas con proyección 'SI': {len(self.datasetfiltrado)}")
 
         # 2. Quitar la columna 'NIVEL', 'proyeccion', 'Codigo', ya que no son necesarias
         self.datasetfiltrado = self.datasetfiltrado.drop(columns=['NIVEL'])
@@ -27,16 +27,40 @@ class FinancialDataLoader:
         if 'Codigo' in self.datasetfiltrado.columns:
             self.datasetfiltrado = self.datasetfiltrado.drop(columns=['Codigo'])
 
+        #2.1 Renombrar cuentas con el mismo nombre añadiendo un incremento al final de las cuentas con el mismo nombre (cuenta, cuenta1, cuenta 2)
+        data_t= self.datasetfiltrado.copy()
+
+        # Renombrar cuentas duplicadas agregando un número incremental
+        cuentas = data_t['BALANCE GENERAL']
+        cuentas_renombradas = cuentas.copy()
+
+        # Diccionario para contar repeticiones
+        cuenta_count = {}
+
+        for idx, nombre in enumerate(cuentas):
+            if nombre not in cuenta_count:
+                cuenta_count[nombre] = 0
+            else:
+                cuenta_count[nombre] += 1
+                nuevo_nombre = f"{nombre}{cuenta_count[nombre]}"
+                cuentas_renombradas.iloc[idx] = nuevo_nombre
+
+        # Reemplazar la columna original con los nombres únicos
+        data_t['BALANCE GENERAL'] = cuentas_renombradas
+
+        # Guardar de vuelta
+        self.datasetfiltrado = data_t
+        
         # 3. Transponer: queremos que las fechas sean el índice (filas)
-        self.datasetfiltrado = self.datasetfiltrado.set_index('CUENTAS').T
-        #self.datasetfiltrado = self.datasetfiltrado.set_index('BALANCE GENERAL').T #nuevo dataset 
+        #self.datasetfiltrado = self.datasetfiltrado.set_index('CUENTAS').T
+        self.datasetfiltrado = self.datasetfiltrado.set_index('BALANCE GENERAL').T #nuevo dataset 
 
         # 4. Opcional: limpiar nombres de columnas si hay espacios
         self.datasetfiltrado.columns = self.datasetfiltrado.columns.str.strip()
 
         # 5. Resetear el índice para que las fechas estén como columna
         self.datasetfiltrado = self.datasetfiltrado.reset_index().rename(columns={'index': 'FECHA'})
-        #print(self.datasetfiltrado)
+        print(self.datasetfiltrado)
         self.FormatearFecha()
     def filtrarCuentasConDatosNumericos(self):
         '''Elimina las columnas (cuentas) que no tengan al menos un valor numerico válido (ignora '-') y se queda con las que tienen al menos un valor numerico'''
