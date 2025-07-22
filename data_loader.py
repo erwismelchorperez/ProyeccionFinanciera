@@ -14,13 +14,22 @@ class FinancialDataLoader:
     def load_data(self):
         self.dataset = pd.read_csv(self.filepath)
     def ProcesarDataset(self):
-        # Filtrar el dataframe con las cuentas con las que vamos a entrenar los predictores de regresión
+        # Filtrar el dataframe con las cuentas con proyeccion 'SI' con las que vamos a entrenar los predictores de regresión
         self.datasetfiltrado = self.dataset[self.dataset['NIVEL'] == 2]# 2 para a nivel de disponibilidades, 3 para caja
-        # 2. Quitar la columna 'NIVEL' ya que ya no es necesaria
+        #self.datasetfiltrado = self.dataset[self.dataset['proyeccion'].str.strip().str.upper() == 'SI']
+        # Mostrar cuántas filas cumplen con proyección == "SI"
+        #print(f"Filas con proyección 'SI': {len(self.datasetfiltrado)}")
+
+        # 2. Quitar la columna 'NIVEL', 'proyeccion', 'Codigo', ya que no son necesarias
         self.datasetfiltrado = self.datasetfiltrado.drop(columns=['NIVEL'])
+        if 'proyeccion' in self.datasetfiltrado.columns:
+            self.datasetfiltrado = self.datasetfiltrado.drop(columns=['proyeccion'])
+        if 'Codigo' in self.datasetfiltrado.columns:
+            self.datasetfiltrado = self.datasetfiltrado.drop(columns=['Codigo'])
 
         # 3. Transponer: queremos que las fechas sean el índice (filas)
         self.datasetfiltrado = self.datasetfiltrado.set_index('CUENTAS').T
+        #self.datasetfiltrado = self.datasetfiltrado.set_index('BALANCE GENERAL').T #nuevo dataset 
 
         # 4. Opcional: limpiar nombres de columnas si hay espacios
         self.datasetfiltrado.columns = self.datasetfiltrado.columns.str.strip()
@@ -29,6 +38,22 @@ class FinancialDataLoader:
         self.datasetfiltrado = self.datasetfiltrado.reset_index().rename(columns={'index': 'FECHA'})
         #print(self.datasetfiltrado)
         self.FormatearFecha()
+    def filtrarCuentasConDatosNumericos(self):
+        '''Elimina las columnas (cuentas) que no tengan al menos un valor numerico válido (ignora '-') y se queda con las que tienen al menos un valor numerico'''
+        # Convertir '-' en NaN
+        self.datasetfiltrado.replace('-', np.nan, inplace=True)
+        # Convertir todo lo que se pueda a numérico
+        for col in self.datasetfiltrado.columns:
+            if col != 'FECHA':
+                #convierte cada valor de cada columna a valores numericos, pd.to_numeric()
+                self.datasetfiltrado[col] = pd.to_numeric(self.datasetfiltrado[col], errors='coerce') #coerce fuerza a cada valor no numerico a convertirlo a NaN
+        # Eliminar columnas con todos los valores NaN (sin datos válidos)
+        columnas_validas = ['FECHA'] + [
+            col for col in self.datasetfiltrado.columns
+            if col != 'FECHA' and self.datasetfiltrado[col].notna().any()
+        ]
+        # Filtrar solo las columnas con al menos un valor numérico válido
+        self.datasetfiltrado = self.datasetfiltrado[columnas_validas]
     def FormatearFecha(self):
         self.datasetfiltrado['FECHA'] = self.datasetfiltrado['FECHA'].apply(lambda x: self.formatearColumns(x))
         #print(self.datasetfiltrado)
@@ -89,6 +114,12 @@ class FinancialDataLoader:
             fila['diff'+str(i)] = diferencia[i]
         return fila
     def ProcesarDatosEntrenamientoPruebasValidaction(self, cuenta_objetivo, flag_ventana, ventana, usar_datos_3d):
+        #para evitar sobreercribir en cada llamada de una cuenta objetivo nueva
+        entrenamiento = self.Entrenamiento.copy()
+        entrenamientoFinal = self.EntrenamientoFinal.copy()
+        pruebas = self.Pruebas.copy()
+        validation = self.Validation.copy()
+
         (X_train, y_train, X_trainFinal, y_trainFinal, X_test, y_test, serie_validation) = (None, None, None, None, None, None, None)
         self.Entrenamiento[cuenta_objetivo] = pd.to_numeric(self.Entrenamiento[cuenta_objetivo], errors='coerce')
         self.Entrenamiento[cuenta_objetivo] = self.Entrenamiento[cuenta_objetivo].round(2)
