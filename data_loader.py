@@ -121,26 +121,26 @@ class FinancialDataLoader:
         validation = self.Validation.copy()
 
         (X_train, y_train, X_trainFinal, y_trainFinal, X_test, y_test, serie_validation) = (None, None, None, None, None, None, None)
-        self.Entrenamiento[cuenta_objetivo] = pd.to_numeric(self.Entrenamiento[cuenta_objetivo], errors='coerce')
-        self.Entrenamiento[cuenta_objetivo] = self.Entrenamiento[cuenta_objetivo].round(2)
-        self.EntrenamientoFinal[cuenta_objetivo] = pd.to_numeric(self.EntrenamientoFinal[cuenta_objetivo], errors='coerce')
-        self.EntrenamientoFinal[cuenta_objetivo] = self.EntrenamientoFinal[cuenta_objetivo].round(2)
-        self.Pruebas[cuenta_objetivo] = pd.to_numeric(self.Pruebas[cuenta_objetivo], errors='coerce')
-        self.Pruebas[cuenta_objetivo] = self.Pruebas[cuenta_objetivo].round(2)
-        self.Validation[cuenta_objetivo] = pd.to_numeric(self.Validation[cuenta_objetivo], errors='coerce')
-        self.Validation[cuenta_objetivo] = self.Validation[cuenta_objetivo].round(2)
+        entrenamiento[cuenta_objetivo] = pd.to_numeric(entrenamiento[cuenta_objetivo], errors='coerce')
+        entrenamiento[cuenta_objetivo] = entrenamiento[cuenta_objetivo].round(2)
+        entrenamientoFinal[cuenta_objetivo] = pd.to_numeric(entrenamientoFinal[cuenta_objetivo], errors='coerce')
+        entrenamientoFinal[cuenta_objetivo] = entrenamientoFinal[cuenta_objetivo].round(2)
+        pruebas[cuenta_objetivo] = pd.to_numeric(pruebas[cuenta_objetivo], errors='coerce')
+        pruebas[cuenta_objetivo] = pruebas[cuenta_objetivo].round(2)
+        validation[cuenta_objetivo] = pd.to_numeric(validation[cuenta_objetivo], errors='coerce')
+        validation[cuenta_objetivo] = validation[cuenta_objetivo].round(2)
         print(self.Entrenamiento)
         usar_datos_3d = usar_datos_3d
         if flag_ventana:
             # Entrenamiento (2019-2021)
-            serie_train = self.Entrenamiento[cuenta_objetivo].values
+            serie_train = entrenamiento[cuenta_objetivo].values
             X_train, y_train = self.crear_dataset_supervisado(serie_train, ventana, reshape_3d=usar_datos_3d)
-            serie_trainfinal = self.EntrenamientoFinal[cuenta_objetivo].values
+            serie_trainfinal = entrenamientoFinal[cuenta_objetivo].values
             X_trainFinal, y_trainFinal = self.crear_dataset_supervisado(serie_train, ventana, reshape_3d=usar_datos_3d)
 
             # Para probar, usamos los 3 últimos valores de entrenamiento + primeros de test
-            serie_completa = np.concatenate([self.Entrenamiento[cuenta_objetivo].values[-ventana:],
-                                            self.Pruebas[cuenta_objetivo].values])
+            serie_completa = np.concatenate([entrenamiento[cuenta_objetivo].values[-ventana:],
+                                            pruebas[cuenta_objetivo].values])
             X_test, y_test = self.crear_dataset_supervisado(serie_completa, ventana, reshape_3d=usar_datos_3d)
 
             # datos para la validación
@@ -148,13 +148,13 @@ class FinancialDataLoader:
             #serie_validation = self.convertir_a_float_si_es_str(serie_validation, decimales=2, flag = flag_ventana)
             print("Serie Validation\n",serie_validation)
         else:
-            X_train = self.Entrenamiento[cuenta_objetivo]
-            y_train = self.Entrenamiento[cuenta_objetivo]
-            X_trainFinal = self.EntrenamientoFinal[cuenta_objetivo]
-            y_trainFinal = self.EntrenamientoFinal[cuenta_objetivo]
-            X_test = self.Pruebas[cuenta_objetivo]
-            y_test = self.Pruebas[cuenta_objetivo]
-            serie_validation = self.Validation[cuenta_objetivo].values
+            X_train = entrenamiento[cuenta_objetivo]
+            y_train = entrenamiento[cuenta_objetivo]
+            X_trainFinal = entrenamientoFinal[cuenta_objetivo]
+            y_trainFinal = entrenamientoFinal[cuenta_objetivo]
+            X_test = pruebas[cuenta_objetivo]
+            y_test = pruebas[cuenta_objetivo]
+            serie_validation = validation[cuenta_objetivo].values
             print(serie_validation)
             #serie_validation = self..convertir_a_float_si_es_str(serie_validation, decimales=2, flag = flag_ventana)
         return X_train, y_train, X_trainFinal, y_trainFinal, X_test, y_test, serie_validation
