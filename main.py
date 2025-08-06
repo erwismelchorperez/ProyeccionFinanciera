@@ -54,7 +54,8 @@ financialdata = FinancialDataLoader('./dataset/Estados_FinancierosGaby_proyeccio
 # Cargar datos
 financialdata.load_data()
 financialdata.ProcesarDataset() #FILTRA DATASET, TRASPUESTA, LIMPIA FILAS, FECHA MODO COLUMNA
-financialdata.filtrarCuentasConDatosNumericos();
+#financialdata.filtrarCuentasConDatosNumericos();
+financialdata.conservaSOLOdatosNUMERICOS();
 df = financialdata.getDataset()
 financialdata.SepararDatos() #PREPARA DATASET ENTRENAMIENTO PRUEBA, VALIDACIÓN
 Entrenamiento = financialdata.getEntrenamiento()
@@ -68,7 +69,7 @@ Validation = financialdata.getValidation()
 #print([col for col in Entrenamiento.columns if col!='FECHA'])
 cuentas_objetivo = [col for col in Entrenamiento.columns if col != 'FECHA']  #selecciona las cuentas objetivo con SI ya previamente procesadas
 for cuenta_objetivo in cuentas_objetivo:
-    #print(cuenta_objetivo)
+    print(cuenta_objetivo)
     Entrenamiento_filtrado= Entrenamiento[['FECHA', cuenta_objetivo]]
     #print(Entrenamiento_filtrado)
     Pruebas_filtrado = Pruebas[['FECHA', cuenta_objetivo]]
@@ -178,12 +179,12 @@ for cuenta_objetivo in cuentas_objetivo:
         joblib.dump(tempmodels[model], "./entidad/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
 
 
-    viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_modelos_"+str(flag_ventana)+".png")
-    viz.plot_model_errors(model_scores, save_path="plots/errores_comparados_"+str(flag_ventana)+".png")
-    viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_errores_comparados_"+str(flag_ventana)+".png")
+    viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_" + cuenta_objetivo + "_modelos_"+str(flag_ventana)+".png")
+    viz.plot_model_errors(model_scores, save_path="plots/errores_" + cuenta_objetivo + "_comparados_"+str(flag_ventana)+".png")
+    viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_" + cuenta_objetivo + "_errores_comparados_"+str(flag_ventana)+".png")
     ########################
     df = pd.DataFrame(rows)
-    df.to_csv("./plots/validacionmodelo_"+str(flag_ventana)+".csv", index=False)
+    df.to_csv("./plots/validacionmodelo_" + cuenta_objetivo + "_"+str(flag_ventana)+".csv", index=False)
 
     # Métricas finales
     print("Resumen de métricas:")
