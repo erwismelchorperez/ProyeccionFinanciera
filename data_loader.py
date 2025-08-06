@@ -30,7 +30,7 @@ class FinancialDataLoader:
         #2.1 Renombrar cuentas con el mismo nombre añadiendo un incremento al final de las cuentas con el mismo nombre (cuenta, cuenta1, cuenta 2)
         data_t= self.datasetfiltrado.copy()
 
-        # Renombrar cuentas duplicadas agregando un número incremental
+        # Renombrar cuentas duplicadas agregando un número incremental, ejemplo cuenta, cuenta0, .. cuenta_n
         cuentas = data_t['BALANCE GENERAL']
         cuentas_renombradas = cuentas.copy()
 
@@ -78,6 +78,20 @@ class FinancialDataLoader:
         ]
         # Filtrar solo las columnas con al menos un valor numérico válido
         self.datasetfiltrado = self.datasetfiltrado[columnas_validas]
+    def conservaSOLOdatosNUMERICOS(self):
+        df=self.datasetfiltrado.copy() #mantener una copia
+        df=df.replace('-',np.nan)
+        for col in df.columns:
+            if col!='FECHA':
+                df[col]=pd.to_numeric(df[col],errors='coerce')
+        
+        #filtrar
+        columnas_Validas=['FECHA']+[
+            col for col in df.columns
+            if col!='FECHA' and df[col].notna().all()
+        ]
+        self.datasetfiltrado=df[columnas_Validas]
+            
     def FormatearFecha(self):
         self.datasetfiltrado['FECHA'] = self.datasetfiltrado['FECHA'].apply(lambda x: self.formatearColumns(x))
         #print(self.datasetfiltrado)
