@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Intereses a cargo asociados con cuentas de captación sin movimiento_True,14,4.305211589995607e-07,"diff0,diff1,diff2"

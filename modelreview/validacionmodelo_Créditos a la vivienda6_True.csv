@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Créditos a la vivienda6_True,14,4.299540366218556e-07,"diff0,diff1,diff2"

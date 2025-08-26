@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Resultado por intermediación_True,14,4.300041387650653e-07,"diff0,diff1,diff2"

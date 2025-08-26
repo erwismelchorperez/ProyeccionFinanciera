@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Depósitos a plazo_True,14,34165603.536587514,"diff0,diff1,diff2"

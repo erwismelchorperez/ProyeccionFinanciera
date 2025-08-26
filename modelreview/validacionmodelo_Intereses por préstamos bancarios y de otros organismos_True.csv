@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Intereses por préstamos bancarios y de otros organismos_True,14,14900.06135660131,"diff0,diff1,diff2"

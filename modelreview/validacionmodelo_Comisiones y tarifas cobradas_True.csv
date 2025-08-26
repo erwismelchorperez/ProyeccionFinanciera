@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Comisiones y tarifas cobradas_True,14,609179.5515392768,"diff0,diff1,diff2"

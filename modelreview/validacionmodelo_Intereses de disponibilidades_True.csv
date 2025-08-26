@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Intereses de disponibilidades_True,14,44.67217517315279,"diff0,diff1,diff2"
