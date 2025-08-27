@@ -1,10 +1,12 @@
 .venv/
 venv
+.venv
+venv/
 __pycache__/
 *.py[cod]
 *.log
 *.csv#
-
+*.csv
 .pytest_cache/
 
 *.png
