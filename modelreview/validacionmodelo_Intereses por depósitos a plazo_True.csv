@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Intereses por depósitos a plazo_True,14,4236468.381409234,"diff0,diff1,diff2"

@@ -1,0 +1,53 @@
+archivo_origen,modelo,MR0,MP0,diff0,MR1,MP1,diff1,MR2,MP2,diff2
+validacionmodelo_AÑO_True,DTPSO,2025,2023.0,2.0,2025,2023.0,2.0,2025,2023.0,2.0
+validacionmodelo_Capital contribuido_True,DTPSO,46475907,43909467.0,2566440.0,46699803,43909467.0,2790336.0,46948934,43909467.0,3039467.0
+validacionmodelo_Comisiones y tarifas cobradas_True,DTPSO,185564,134127.0,51437.0,312401,225610.00000000003,86790.99999999997,455175,342730.0,112445.0
+validacionmodelo_Comisiones y tarifas pagadas_True,DTPSO,96821,40166.0,56655.0,167158,70634.0,96524.0,222934,108291.0,114643.0
+validacionmodelo_Costos y gastos asociados con el otorgamiento del crédito_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos a la vivienda3_True,DTPSO,0,0.2100840336134453,-0.2100840336134453,0,0.2100840336134453,-0.2100840336134453,0,0.2100840336134453,-0.2100840336134453
+validacionmodelo_Créditos a la vivienda4_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos a la vivienda5_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos a la vivienda6_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos comerciales3_True,DTPSO,217288,167625.0,49663.0,404523,321096.0,83427.0,618616,491724.0,126892.0
+validacionmodelo_Créditos comerciales4_True,DTPSO,2469,37163.0,-34694.0,12131,38228.0,-26097.0,12346,39126.0,-26780.0
+validacionmodelo_Créditos comerciales5_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos comerciales6_True,DTPSO,-14036,-38413.99999999999,24377.999999999996,-96923,-6359.000000000005,-90564.0,-36630,-37861.00000000001,1231.0000000000073
+validacionmodelo_Créditos de consumo1_True,DTPSO,9032738,9583176.0,-550438.0,8799823,9729654.000000002,-929831.000000002,8084911,10071746.000000002,-1986835.0000000016
+validacionmodelo_Créditos de consumo2_True,DTPSO,-15314510,-15012801.0,-301709.0,-14905902,-15107311.0,201409.0,-15870485,-15517712.0,-352773.0
+validacionmodelo_Créditos de consumo3_True,DTPSO,7809437,69313602.0,-61504165.0,14943581,69313602.0,-54370021.0,23061817,69313602.0,-46251785.0
+validacionmodelo_Créditos de consumo4_True,DTPSO,283763,54701.0,229062.0,422632,152454.0,270178.0,498776,248022.0,250754.0
+validacionmodelo_Créditos de consumo5_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Créditos de consumo6_True,DTPSO,1222155,14891228.999999998,-13669073.999999998,1935647,14891228.999999998,-12955581.999999998,4046960,14891228.999999998,-10844268.999999998
+validacionmodelo_Créditos de consumo_True,DTPSO,455122670,380508834.0,74613836.0,466064428,380508834.0,85555594.0,472451068,380508834.0,91942234.0
+validacionmodelo_Depósitos a plazo_True,DTPSO,138974402,90090201.0,48884200.99999999,150681725,90090201.0,60591523.99999999,155961229,90090201.0,65871027.99999999
+validacionmodelo_Depósitos de exigibilidad inmediata_True,DTPSO,430361702,383651347.0,46710355.00000006,432268641,381790297.0,50478344.0,436236415,379346305.0,56890110.0
+validacionmodelo_Disponibilidades_True,DTPSO,24108153,17485245.0,6622908.0,19799516,15881553.0,3917963.0,22218738,14613610.0,7605128.0
+validacionmodelo_Estimación preventiva para riesgos crediticios adicional1_True,DTPSO,432,44100.99999999999,-43668.99999999999,-8951,58063.99999999999,-67014.99999999999,-4174,61926.99999999998,-66100.99999999997
+validacionmodelo_Fondo de reserva_True,DTPSO,127433107,99024566.0,28408541.00000001,127433107,99024566.0,28408541.00000001,127433107,99024566.0,28408541.00000001
+validacionmodelo_Gastos de administración y promoción_True,DTPSO,3607147,43066616.0,-39459469.0,8387541,43066616.0,-34679075.0,12955309,43066616.0,-30111307.0
+validacionmodelo_Incremento por actualización de estimación preventiva para riesgos crediticios_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Incremento por actualización de gastos por intereses_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Incremento por actualización de ingresos por intereses_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Intereses a cargo asociados con cuentas de captación sin movimiento_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Intereses de disponibilidades_True,DTPSO,0,19.43478260869565,-19.43478260869565,0,59.0,-59.0,0,135.0,-135.0
+validacionmodelo_Intereses por depósitos a plazo_True,DTPSO,760149,3977876.0,-3217727.0,1506776,3977876.0,-2471100.0,2369964,3977876.0,-1607912.0
+validacionmodelo_Intereses por depósitos de exigibilidad inmediata_True,DTPSO,835175,758998.0,76177.0,1591510,1449406.0,142104.0,2434591,2214245.0,220346.0
+validacionmodelo_Intereses por préstamos bancarios y de otros organismos_True,DTPSO,0,9272.0,-9272.0,0,9272.0,-9272.0,0,9272.0,-9272.0
+validacionmodelo_Intereses y rendimientos a favor en operaciones de reporto_True,DTPSO,0,395.2448979591837,-395.2448979591837,0,395.2448979591837,-395.2448979591837,0,395.2448979591837,-395.2448979591837
+validacionmodelo_Intereses y rendimientos a favor provenientes de inversiones en valores_True,DTPSO,2430998,25406285.0,-22975287.0,4495126,25406285.0,-20911159.0,6754384,25406285.0,-18651901.0
+validacionmodelo_Inversiones en valores_True,DTPSO,280216243,234937800.0,45278443.0,290849436,235107707.0,55741729.0,293608122,240312069.00000003,53296052.99999997
+validacionmodelo_Inversiones permanentes_True,DTPSO,1503804,1421565.0,82239.0,1503804,1421565.0,82239.0,1503804,1421565.0,82239.0
+validacionmodelo_Operaciones discontinuadas_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Otras cuentas por cobrar_True,DTPSO,3358004,2127176.0,1230828.0,3766737,2127176.0,1639561.0,3756536,2352503.0,1404033.0
+validacionmodelo_Otras cuentas por pagar_True,DTPSO,14075139,11278241.0,2796898.0,14987231,11844861.0,3142370.0,13527903,11473354.0,2054549.0
+validacionmodelo_Otros activos_True,DTPSO,1792279,1077983.0,714296.0,1718950,1007162.0,711788.0,1567336,896707.0,670629.0
+validacionmodelo_Otros ingresos (egresos) de la operación_True,DTPSO,-1540,493630.00000000006,-495170.00000000006,-5247,846105.0,-851352.0,4680,856494.0,-851814.0
+"validacionmodelo_Participación en el resultado de subsidiarias no consolidadas, asociadas y negocios conjuntos_True",DTPSO,0,2372.813008130081,-2372.813008130081,0,2372.813008130081,-2372.813008130081,0,2372.813008130081,-2372.813008130081
+"validacionmodelo_Propiedades, mobiliario y equipo_True",DTPSO,21498801,15092392.0,6406409.0,21397787,15050960.0,6346827.0,22029172,15016270.0,7012902.0
+validacionmodelo_Pérdida por valorización_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Resultado neto_True,DTPSO,4420136,32769314.0,-28349178.0,7102388,32769314.0,-25666926.0,9416839,32769314.0,-23352475.0
+validacionmodelo_Resultado por intermediación_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Resultado por posición monetaria neto (margen financiero)_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
+validacionmodelo_Total ingresos_True,DTPSO,10927979,103988221.0,-93060242.0,20585147,103988221.0,-83403074.0,31405794,103988221.0,-72582427.0
+validacionmodelo_True,DTPSO,280216243,234937800.0,45278443.0,290849436,235107707.0,55741729.0,293608122,240312069.00000003,53296052.99999997
+validacionmodelo_Utilidad por valorización_True,DTPSO,0,0.0,0.0,0,0.0,0.0,0,0.0,0.0
