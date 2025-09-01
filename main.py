@@ -213,8 +213,6 @@ def main(entidad: int):
         df = pd.DataFrame(rows)
         #df.to_csv("./plots/validacionmodelo_" + cuenta_objetivo + "_"+str(flag_ventana)+".csv", index=False)
         df.to_csv(os.path.join(plots_dir, f"validacionmodelo_{cuenta_objetivo}_{flag_ventana}.csv"), index=False)
-
-
         # Métricas finales
         print("Resumen de métricas:")
         for name, score in model_scores.items():
