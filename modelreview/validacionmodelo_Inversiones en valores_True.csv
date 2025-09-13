@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Inversiones en valores_True,14,30968276.03097753,"diff0,diff1,diff2"

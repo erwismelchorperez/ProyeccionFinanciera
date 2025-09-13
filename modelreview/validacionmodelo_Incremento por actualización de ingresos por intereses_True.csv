@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Incremento por actualización de ingresos por intereses_True,14,4.316586996270615e-07,"diff0,diff1,diff2"

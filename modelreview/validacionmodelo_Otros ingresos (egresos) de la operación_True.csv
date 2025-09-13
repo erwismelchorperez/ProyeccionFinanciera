@@ -1,0 +1,2 @@
+archivo_origen,modelo,frecuencia,promedio_error,columnas_usadas
+modelreview,validacionmodelo_Otros ingresos (egresos) de la operación_True,14,523544.52931544895,"diff0,diff1,diff2"
