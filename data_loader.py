@@ -19,19 +19,28 @@ class FinancialDataLoader:
         self.datasetfiltrado = self.dataset[self.dataset['proyeccion'].str.strip().str.upper() == 'SI']
         # Mostrar cuántas filas cumplen con proyección == "SI"
         print(f"Filas con proyección 'SI': {len(self.datasetfiltrado)}")
-
-        # 2. Quitar la columna 'NIVEL', 'proyeccion', 'Codigo', ya que no son necesarias
+        # 2. Quitar la columna 'NIVEL', 'proyeccion', 'Balance o nombre de la cuenta', ya que no son necesarias
         self.datasetfiltrado = self.datasetfiltrado.drop(columns=['NIVEL'])
         if 'proyeccion' in self.datasetfiltrado.columns:
             self.datasetfiltrado = self.datasetfiltrado.drop(columns=['proyeccion'])
-        if 'Codigo' in self.datasetfiltrado.columns:
-            self.datasetfiltrado = self.datasetfiltrado.drop(columns=['Codigo'])
-
+        #if 'Codigo' in self.datasetfiltrado.columns:
+        #    self.datasetfiltrado = self.datasetfiltrado.drop(columns=['Codigo'])
+        if 'BALANCE GENERAL' in self.datasetfiltrado.columns:
+            self.datasetfiltrado = self.datasetfiltrado.drop(columns=['BALANCE GENERAL'])
+        self.datasetfiltrado['Codigo'] = (
+            self.datasetfiltrado['Codigo']
+            .astype(str)              # fuerza a string
+            .str.strip()              # quita espacios
+            .str.replace(r'\.0$', '', regex=True)  # elimina sufijo ".0" si quedó por cast desde float
+        )
+        self.datasetfiltrado = self.datasetfiltrado[
+            self.datasetfiltrado['Codigo'].ne('') & self.datasetfiltrado['Codigo'].ne('nan')
+        ].copy()
         #2.1 Renombrar cuentas con el mismo nombre añadiendo un incremento al final de las cuentas con el mismo nombre (cuenta, cuenta1, cuenta 2)
-        data_t= self.datasetfiltrado.copy()
-
+        #data_t= self.datasetfiltrado.copy()
+        print(self.datasetfiltrado)
         # Renombrar cuentas duplicadas agregando un número incremental, ejemplo cuenta, cuenta0, .. cuenta_n
-        cuentas = data_t['BALANCE GENERAL']
+        '''cuentas = data_t['BALANCE GENERAL']
         cuentas_renombradas = cuentas.copy()
 
         # Diccionario para contar repeticiones
@@ -47,16 +56,16 @@ class FinancialDataLoader:
 
         # Reemplazar la columna original con los nombres únicos
         data_t['BALANCE GENERAL'] = cuentas_renombradas
-
+        '''
         # Guardar de vuelta
-        self.datasetfiltrado = data_t
+        #self.datasetfiltrado = data_t
         
         # 3. Transponer: queremos que las fechas sean el índice (filas)
         #self.datasetfiltrado = self.datasetfiltrado.set_index('CUENTAS').T
-        self.datasetfiltrado = self.datasetfiltrado.set_index('BALANCE GENERAL').T #nuevo dataset 
-
+        self.datasetfiltrado = self.datasetfiltrado.set_index('Codigo').T #nuevo dataset 
+        print(self.datasetfiltrado)
         # 4. Opcional: limpiar nombres de columnas si hay espacios
-        self.datasetfiltrado.columns = self.datasetfiltrado.columns.str.strip()
+        #self.datasetfiltrado.columns = self.dataset.columns.str.strip()
 
         # 5. Resetear el índice para que las fechas estén como columna
         self.datasetfiltrado = self.datasetfiltrado.reset_index().rename(columns={'index': 'FECHA'})

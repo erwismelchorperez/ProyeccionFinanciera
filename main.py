@@ -20,15 +20,53 @@ import sys
 
 from sklearn.model_selection import train_test_split
 
+'''
+{
+  "templateid": 1,
+  "cuentas": [
+    {
+      "nivel": 1,
+      "tipo": "Activo",
+      "codigo": "1",
+      "nombre": "Caja",
+      "proyeccion": "NO",
+      "segmento": ""
+    },
+    {
+      "nivel": 2,
+      "tipo": "Activo",
+      "codigo": "101",
+      "nombre": "Disponibilidades",
+      "proyeccion": "SI",
+      "segmento": ""
+    },
+    {
+        "nivel": 2,
+        "tipo": "Activo",
+        "codigo": "102",
+        "nombre": "Inversiones en valores",
+        "proyeccion": "SI",
+        "segmento": ""
+    }
+  ]
+}
+institucion:
+      sucursal:
+                rnn_templateid_codigo.pgk
+
+'''
 
 
-def main(entidad: int):
-    #creamos la nueva carpeta entidad #
-    # ruta raíz de salida para esta entidad
-    root_dir = f"./entidades/entidad_{entidad}"
-    os.makedirs(root_dir, exist_ok=True)  # crea ./entidades/entidadN si no existe
+def main(institucion: int, sucursal:int, templateid:int):
+    #creamos la nueva carpeta institucion #
+    # ruta raíz de salida para esta institucion
+    root_dir = f"./instituciones/institucion_{institucion}"
+    os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe       
 
-    plots_dir = os.path.join("plots", f"entidad_{entidad}")
+    suc_dir = f"./instituciones/institucion_{institucion}/sucursal_{sucursal}"
+    os.makedirs(suc_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
+
+    plots_dir = os.path.join("plots", f"institucion_{institucion}/sucursal_{sucursal}")
     os.makedirs(plots_dir, exist_ok=True)
 
     # Diccionario para traducir meses de español a inglés abreviado
@@ -42,14 +80,14 @@ def main(entidad: int):
         #"DTPSO": HyperparameterDT_PSO(),
         #"MLP": HyperparameterMLP(),
         #"MLPSO": HyperparameterMLP_PSO(),
-        "Lasso": HyperparameterLasso(),
+        #"Lasso": HyperparameterLasso(),
         "LassoPSO": HyperparameterLasso_PSO(),
         #"Linear": HyperparameterLinear(),
         "LinearPSO": HyperparameterLinear_PSO(),
         #"RF": HyperparameterRandomForest(),
         #"RFPSO": HyperparameterRandomForest_PSO(),
-        "Ridge": HyperparameterRidge(),
-        "RidgePSO": HyperparameterRidge_PSO(),
+        #"Ridge": HyperparameterRidge(),
+        #"RidgePSO": HyperparameterRidge_PSO(),
         #"XGBoost": HyperparameterXGBoost(),
         #"XGBoostPSO": HyperparameterXGBoost_PSO()
 
@@ -174,9 +212,9 @@ def main(entidad: int):
         print(tempmodels)
         print(model_scores)
         # Crear la carpeta (incluye subcarpetas si no existen)
-        #crear subcarpeta para cada cuenta dentro de la carpeta de la entidad
-        cuenta_dir=os.path.join(root_dir,cuenta_objetivo)
-        os.makedirs(cuenta_dir,exist_ok=True)#os.makedirs("./entidad/" + cuenta_objetivo, exist_ok=True)
+        #crear subcarpeta para cada cuenta dentro de la carpeta de la institucion
+        cuenta_dir=os.path.join(suc_dir,cuenta_objetivo)
+        os.makedirs(cuenta_dir,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)
 
         # Ordenar por R2 de mayor a menor
         sorted_by_r2 = dict(sorted(model_scores.items(), key=lambda x: x[1]['R2'], reverse=True))
@@ -188,31 +226,31 @@ def main(entidad: int):
                 break
             print(f"{model}: R2 = {metrics['R2']:.4f}")
             # Guardar cada modelo
-            joblib.dump(tempmodels[model],os.path.join(cuenta_dir,f"{model}_{cuenta_objetivo}.pkl"))
-            #joblib.dump(tempmodels[model], "./entidad/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
+            joblib.dump(tempmodels[model],os.path.join(cuenta_dir,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
+            #joblib.dump(tempmodels[model], "./institucion/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
 
 
         #viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_" + cuenta_objetivo + "_modelos_"+str(flag_ventana)+".png")
         viz.plot_multiple_predictions(
             fechas_test, y_test, model_scores,
             title="Modelos - Real vs Predicho",
-            save_path=os.path.join(plots_dir, f"comparacion_{cuenta_objetivo}_modelos_{flag_ventana}.png")
+            save_path=os.path.join(plots_dir, f"comparacion_{cuenta_objetivo}_modelos_template_{templateid}_{flag_ventana}.png")
         )
         #viz.plot_model_errors(model_scores, save_path="plots/errores_" + cuenta_objetivo + "_comparados_"+str(flag_ventana)+".png")
         viz.plot_model_errors(
             model_scores,
-            save_path=os.path.join(plots_dir, f"errores_{cuenta_objetivo}_comparados_{flag_ventana}.png")
+            save_path=os.path.join(plots_dir, f"errores_{cuenta_objetivo}_comparados_template_{templateid}_{flag_ventana}.png")
         )
         #viz.plot_model_errors_boxplot(model_scores, save_path="plots/boxplot_" + cuenta_objetivo + "_errores_comparados_"+str(flag_ventana)+".png")
         viz.plot_model_errors_boxplot(
             model_scores,
-            save_path=os.path.join(plots_dir, f"boxplot_{cuenta_objetivo}_errores_comparados_{flag_ventana}.png")
+            save_path=os.path.join(plots_dir, f"boxplot_template_{templateid}_{cuenta_objetivo}_errores_comparados_{flag_ventana}.png")
         )
 
         ########################
         df = pd.DataFrame(rows)
         #df.to_csv("./plots/validacionmodelo_" + cuenta_objetivo + "_"+str(flag_ventana)+".csv", index=False)
-        df.to_csv(os.path.join(plots_dir, f"validacionmodelo_{cuenta_objetivo}_{flag_ventana}.csv"), index=False)
+        df.to_csv(os.path.join(plots_dir, f"validacionmodelo_template_{templateid}_{cuenta_objetivo}_{flag_ventana}.csv"), index=False)
         # Métricas finales
         print("Resumen de métricas:")
         for name, score in model_scores.items():
@@ -222,15 +260,18 @@ def main(entidad: int):
 
 if __name__ == "__main__":
     # Validar que se pase un argumento entero
-    if len(sys.argv) != 2:
-        print("Este programa requiere un <entero>")
+    if len(sys.argv) != 4:
+        print("Este programa requiere tres enteros (institucionid, sucursalid, templateid): <enteros> <enteros> <enteros>")
         sys.exit(1)
 
     try:
-        valor = int(sys.argv[1])
+        institucion = int(sys.argv[1])
+        sucursal = int(sys.argv[2])
+        templateid = int(sys.argv[3])
     except ValueError:
         print("El parámetro debe ser un número entero.")
         sys.exit(1)
-
+    root_dir = f"./instituciones"
+    os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/ si no existe
     # Llamar a la función principal
-    main(valor)
+    main(institucion,sucursal,templateid)
