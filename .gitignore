@@ -14,5 +14,10 @@ __pycache__/
 *.pkl
 
 gitcommit
+*.dump
+*.backup
+*.sql.gz
+*.sql
+
 #archivo temporal
 gitcommit
