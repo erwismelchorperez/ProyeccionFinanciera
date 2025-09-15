@@ -5,12 +5,19 @@ venv/
 __pycache__/
 *.py[cod]
 *.log
+
 *.csv#
 *.csv
 .pytest_cache/
 
 *.png
 *.pkl
+
+gitcommit
+*.dump
+*.backup
+*.sql.gz
+*.sql
 
 #archivo temporal
 gitcommit
