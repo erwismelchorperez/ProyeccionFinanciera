@@ -20,41 +20,6 @@ import sys
 
 from sklearn.model_selection import train_test_split
 
-'''
-{
-  "templateid": 1,
-  "cuentas": [
-    {
-      "nivel": 1,
-      "tipo": "Activo",
-      "codigo": "1",
-      "nombre": "Caja",
-      "proyeccion": "NO",
-      "segmento": ""
-    },
-    {
-      "nivel": 2,
-      "tipo": "Activo",
-      "codigo": "101",
-      "nombre": "Disponibilidades",
-      "proyeccion": "SI",
-      "segmento": ""
-    },
-    {
-        "nivel": 2,
-        "tipo": "Activo",
-        "codigo": "102",
-        "nombre": "Inversiones en valores",
-        "proyeccion": "SI",
-        "segmento": ""
-    }
-  ]
-}
-institucion:
-      sucursal:
-                rnn_templateid_codigo.pgk
-
-'''
 
 
 def main(institucion: int, sucursal:int, templateid:int):
@@ -80,14 +45,14 @@ def main(institucion: int, sucursal:int, templateid:int):
         #"DTPSO": HyperparameterDT_PSO(),
         #"MLP": HyperparameterMLP(),
         #"MLPSO": HyperparameterMLP_PSO(),
-        #"Lasso": HyperparameterLasso(),
+        "Lasso": HyperparameterLasso(),
         "LassoPSO": HyperparameterLasso_PSO(),
         #"Linear": HyperparameterLinear(),
         "LinearPSO": HyperparameterLinear_PSO(),
         #"RF": HyperparameterRandomForest(),
         #"RFPSO": HyperparameterRandomForest_PSO(),
-        #"Ridge": HyperparameterRidge(),
-        #"RidgePSO": HyperparameterRidge_PSO(),
+        "Ridge": HyperparameterRidge(),
+        "RidgePSO": HyperparameterRidge_PSO(),
         #"XGBoost": HyperparameterXGBoost(),
         #"XGBoostPSO": HyperparameterXGBoost_PSO()
 
