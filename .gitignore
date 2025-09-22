@@ -18,6 +18,8 @@ gitcommit
 *.backup
 *.sql.gz
 *.sql
-
+*.ipynb
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
 #archivo temporal
 gitcommit
