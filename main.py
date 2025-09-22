@@ -26,10 +26,11 @@ def main(institucion: int, sucursal:int, templateid:int):
     #creamos la nueva carpeta institucion #
     # ruta raíz de salida para esta institucion
     root_dir = f"./instituciones/institucion_{institucion}"
-    os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe       
-
-    suc_dir = f"./instituciones/institucion_{institucion}/sucursal_{sucursal}"
-    os.makedirs(suc_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
+    os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
+    suc_matriz = f"./instituciones/institucion_{institucion}/sucursal_{0}"
+    if sucursal!=0:
+        suc_dir = f"./instituciones/institucion_{institucion}/sucursal_{sucursal}"
+        os.makedirs(suc_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
 
     plots_dir = os.path.join("plots", f"institucion_{institucion}/sucursal_{sucursal}")
     os.makedirs(plots_dir, exist_ok=True)
@@ -178,8 +179,11 @@ def main(institucion: int, sucursal:int, templateid:int):
         print(model_scores)
         # Crear la carpeta (incluye subcarpetas si no existen)
         #crear subcarpeta para cada cuenta dentro de la carpeta de la institucion
-        cuenta_dir=os.path.join(suc_dir,cuenta_objetivo)
-        os.makedirs(cuenta_dir,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)
+        cuenta_dir_matriz=os.path.join(suc_matriz,cuenta_objetivo)
+        os.makedirs(cuenta_dir_matriz,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)
+        if sucursal!=0:
+            cuenta_dir=os.path.join(suc_dir,cuenta_objetivo)
+            os.makedirs(cuenta_dir,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)    
 
         # Ordenar por R2 de mayor a menor
         sorted_by_r2 = dict(sorted(model_scores.items(), key=lambda x: x[1]['R2'], reverse=True))
@@ -187,11 +191,13 @@ def main(institucion: int, sucursal:int, templateid:int):
 
         # Mostrar resultados ordenados
         for i, (model, metrics) in enumerate(sorted_by_r2.items()):
-            if i >= 3:
+            if i >= 1:
                 break
             print(f"{model}: R2 = {metrics['R2']:.4f}")
             # Guardar cada modelo
-            joblib.dump(tempmodels[model],os.path.join(cuenta_dir,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
+            joblib.dump(tempmodels[model],os.path.join(cuenta_dir_matriz,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
+            if sucursal!=0:
+                joblib.dump(tempmodels[model],os.path.join(cuenta_dir,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
             #joblib.dump(tempmodels[model], "./institucion/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
 
 
