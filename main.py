@@ -194,6 +194,8 @@ def main(institucion: int, sucursal:int, templateid:int):
             nombre_modelo=f"{model}_{templateid}_{cuenta_objetivo}.pkl"
             rank=i+1;
             # Guardar cada modelo
+            # ruta completa del archivo en matriz
+            ruta_modelo_matriz = os.path.join(cuenta_dir_matriz, nombre_modelo)
             guardar_modelo(tempmodels[model],os.path.join(cuenta_dir_matriz,nombre_modelo)) #matriz
             if sucursal!=0:
                 guardar_modelo(templateid[model],os.path.join(cuenta_dir,nombre_modelo)); #sucursal particula
@@ -204,7 +206,7 @@ def main(institucion: int, sucursal:int, templateid:int):
                 insertar_modelo(
                     cuentaid=cuentaid,
                     modelo=nombre_modelo_bd,
-                    ubicacion=cuenta_dir_matriz
+                    ubicacion=ruta_modelo_matriz
                 )
 
         #viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_" + cuenta_objetivo + "_modelos_"+str(flag_ventana)+".png")
