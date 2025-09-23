@@ -5,7 +5,7 @@ from pathlib import Path
 
 # ================== CONFIGURACIÓN ==================
 # Entrada: carpeta con los CSV de validación (cada dataset)
-carpeta = Path("/media/antonio/ADATA HD710 PRO/Job/plots")
+carpeta = Path("/RUTA DE PLOTS/plots")
 patron = "*.csv"
 
 # Salida: carpeta donde quedarán los CSV por modelo (Linear.csv, RidgePSO.csv, etc.)

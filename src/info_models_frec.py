@@ -5,7 +5,7 @@ import numpy as np
 
 # ================== CONFIGURACIÓN ==================
 # Carpeta con los CSV de entrada (los "validacionmodelo_*.csv" por archivo)
-carpeta = Path("/media/antonio/ADATA HD710 PRO/Job/plots")
+carpeta = Path("/RUTA DE PLOTS/plots")
 
 # Carpeta donde se guardarán los CSV por modelo (Linear.csv, RidgePSO.csv, etc.)
 salida_dir = Path("modelreview")

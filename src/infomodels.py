@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 # ====== CONFIGURACIÓN ======
-carpeta = Path("/media/antonio/ADATA HD710 PRO/Job/plots")  # carpeta con los CSV de entrada
+carpeta = Path("/RUTA DE PLOTS/plots")  # carpeta con los CSV de entrada
 patron = "*.csv"
 archivo_scores = "review.csv"
 salida = Path("modelreview") / archivo_scores
