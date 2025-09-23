@@ -1,23 +1,25 @@
-from data_loader import FinancialDataLoader #prepara datos, SI/NO
-from preprocessor import FinancialPreprocessor
-from visualizer import FinancialVisualizer
+from src.data_loader import FinancialDataLoader #prepara datos, SI/NO
+from src.preprocessor import FinancialPreprocessor
+from src.visualizer import FinancialVisualizer
 
-from models.hyperparameter_dt import HyperparameterDT, HyperparameterDT_PSO
-from models.hyperparameter_mlp import HyperparameterMLP, HyperparameterMLP_PSO
-from models.hyperparameter_lasso import HyperparameterLasso, HyperparameterLasso_PSO
-from models.hyperparameter_linear import HyperparameterLinear, HyperparameterLinear_PSO
+from src.models.hyperparameter_dt import HyperparameterDT, HyperparameterDT_PSO
+from src.models.hyperparameter_mlp import HyperparameterMLP, HyperparameterMLP_PSO
+from src.models.hyperparameter_lasso import HyperparameterLasso, HyperparameterLasso_PSO
+from src.models.hyperparameter_linear import HyperparameterLinear, HyperparameterLinear_PSO
 #from models.hyperparameter_lstm import HyperparameterLSTM, HyperparameterLSTM_PSO
-from models.hyperparameter_rf import HyperparameterRandomForest, HyperparameterRandomForest_PSO
-from models.hyperparameter_ridge import HyperparameterRidge, HyperparameterRidge_PSO
+from src.models.hyperparameter_rf import HyperparameterRandomForest, HyperparameterRandomForest_PSO
+from src.models.hyperparameter_ridge import HyperparameterRidge, HyperparameterRidge_PSO
 #from models.hyperparameter_svr import HyperparameterSVR
-from models.hyperparameter_xgb import HyperparameterXGBoost, HyperparameterXGBoost_PSO
-
+from src.models.hyperparameter_xgb import HyperparameterXGBoost, HyperparameterXGBoost_PSO
+from src.storage import crear_carpeta_cuenta, crear_carpeta_institucion, guardar_modelo #creamos carpeta y guardamos modelos en carpetas
+from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
 import pandas as pd
 import numpy as np
 import joblib
+import json
 import os
 import sys
-
+import psycopg2
 from sklearn.model_selection import train_test_split
 
 
@@ -25,15 +27,10 @@ from sklearn.model_selection import train_test_split
 def main(institucion: int, sucursal:int, templateid:int):
     #creamos la nueva carpeta institucion #
     # ruta raíz de salida para esta institucion
-    root_dir = f"./instituciones/institucion_{institucion}"
-    os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
-    suc_matriz = f"./instituciones/institucion_{institucion}/sucursal_{0}"
-    if sucursal!=0:
-        suc_dir = f"./instituciones/institucion_{institucion}/sucursal_{sucursal}"
-        os.makedirs(suc_dir, exist_ok=True)  # crea ./instituciones/institucionN si no existe
+    suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
 
-    plots_dir = os.path.join("plots", f"institucion_{institucion}/sucursal_{sucursal}")
-    os.makedirs(plots_dir, exist_ok=True)
+    #consulta
+    codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
 
     # Diccionario para traducir meses de español a inglés abreviado
     meses_map = {
@@ -179,27 +176,36 @@ def main(institucion: int, sucursal:int, templateid:int):
         print(model_scores)
         # Crear la carpeta (incluye subcarpetas si no existen)
         #crear subcarpeta para cada cuenta dentro de la carpeta de la institucion
-        cuenta_dir_matriz=os.path.join(suc_matriz,cuenta_objetivo)
-        os.makedirs(cuenta_dir_matriz,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)
+        cuenta_dir_matriz=crear_carpeta_cuenta(suc_matriz,cuenta_objetivo)
         if sucursal!=0:
-            cuenta_dir=os.path.join(suc_dir,cuenta_objetivo)
-            os.makedirs(cuenta_dir,exist_ok=True)#os.makedirs("./institucion/" + cuenta_objetivo, exist_ok=True)    
+            cuenta_dir=crear_carpeta_cuenta(suc_dir,cuenta_objetivo)
 
         # Ordenar por R2 de mayor a menor
         sorted_by_r2 = dict(sorted(model_scores.items(), key=lambda x: x[1]['R2'], reverse=True))
         print(sorted_by_r2)
 
+
+        rank=0
         # Mostrar resultados ordenados
         for i, (model, metrics) in enumerate(sorted_by_r2.items()):
-            if i >= 1:
+            if i >= 3:
                 break
             print(f"{model}: R2 = {metrics['R2']:.4f}")
+            nombre_modelo=f"{model}_{templateid}_{cuenta_objetivo}.pkl"
+            rank=i+1;
             # Guardar cada modelo
-            joblib.dump(tempmodels[model],os.path.join(cuenta_dir_matriz,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
+            guardar_modelo(tempmodels[model],os.path.join(cuenta_dir_matriz,nombre_modelo)) #matriz
             if sucursal!=0:
-                joblib.dump(tempmodels[model],os.path.join(cuenta_dir,f"{model}_{templateid}_{cuenta_objetivo}.pkl"))
-            #joblib.dump(tempmodels[model], "./institucion/" + cuenta_objetivo + "/" + model + "_" + cuenta_objetivo + '.pkl')
-
+                guardar_modelo(templateid[model],os.path.join(cuenta_dir,nombre_modelo)); #sucursal particula
+            # Dentro del loop donde guardas modelos
+            cuentaid = codigo_to_id.get(cuenta_objetivo)
+            nombre_modelo_bd=f"modelo{rank}_{templateid}_{cuenta_objetivo}"
+            if cuentaid:
+                insertar_modelo(
+                    cuentaid=cuentaid,
+                    modelo=nombre_modelo_bd,
+                    ubicacion=cuenta_dir_matriz
+                )
 
         #viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_" + cuenta_objetivo + "_modelos_"+str(flag_ventana)+".png")
         viz.plot_multiple_predictions(
