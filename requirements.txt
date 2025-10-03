@@ -25,3 +25,4 @@ tqdm==4.67.1
 tzdata==2025.2
 xgboost==3.0.2
 psycopg2-binary==2.9.9
+statsmodels>=0.12

@@ -100,6 +100,19 @@ class FinancialDataLoader:
             if col!='FECHA' and df[col].notna().all()
         ]
         self.datasetfiltrado=df[columnas_Validas]
+
+    def reemplazaGuionPorCERO(self):
+        df2= self.datasetfiltrado.copy()  
+
+        # Reemplazar todos los '-' por 0
+        df2= df2.replace('-', 0)
+
+        for col in df2.columns:
+            if col not in ["FECHA", "codigo"]:
+                df2[col] = pd.to_numeric(df2[col], errors="coerce").fillna(0)
+
+        # FECHA y codigo quedan como están
+        self.datasetfiltrado = df2
             
     def FormatearFecha(self):
         self.datasetfiltrado['FECHA'] = self.datasetfiltrado['FECHA'].apply(lambda x: self.formatearColumns(x))

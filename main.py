@@ -11,6 +11,7 @@ from src.models.hyperparameter_rf import HyperparameterRandomForest, Hyperparame
 from src.models.hyperparameter_ridge import HyperparameterRidge, HyperparameterRidge_PSO
 #from models.hyperparameter_svr import HyperparameterSVR
 from src.models.hyperparameter_xgb import HyperparameterXGBoost, HyperparameterXGBoost_PSO
+from src.models.ZeroInflatedPoissonWrapper import ZeroInflatedPoissonWrapper
 from src.storage import crear_carpeta_cuenta, crear_carpeta_institucion, guardar_modelo #creamos carpeta y guardamos modelos en carpetas
 from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
 import pandas as pd
@@ -43,6 +44,7 @@ def main(institucion: int, sucursal:int, templateid:int):
         #"DTPSO": HyperparameterDT_PSO(),
         #"MLP": HyperparameterMLP(),
         #"MLPSO": HyperparameterMLP_PSO(),
+        "ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
         "Lasso": HyperparameterLasso(),
         "LassoPSO": HyperparameterLasso_PSO(),
         #"Linear": HyperparameterLinear(),
@@ -65,8 +67,8 @@ def main(institucion: int, sucursal:int, templateid:int):
     # Cargar datos
     financialdata.load_data()
     financialdata.ProcesarDataset() #FILTRA DATASET, TRASPUESTA, LIMPIA FILAS, FECHA MODO COLUMNA
-    #financialdata.filtrarCuentasConDatosNumericos();
-    financialdata.conservaSOLOdatosNUMERICOS();
+    #financialdata.conservaSOLOdatosNUMERICOS();
+    financialdata.reemplazaGuionPorCERO()
     df = financialdata.getDataset()
     financialdata.SepararDatos() #PREPARA DATASET ENTRENAMIENTO PRUEBA, VALIDACIÓN
     Entrenamiento = financialdata.getEntrenamiento()
@@ -77,15 +79,13 @@ def main(institucion: int, sucursal:int, templateid:int):
     #cuenta_objetivo = 'Inversiones en valores'#, Disponibilidades, CAJA, Cartera de crdito vigente ->archivo Gaby
     #cuenta_objetivo = 'DISPONIBILIDADES'#, , CAJA
     #Procesar cada cuenta objetivo
-    #print([col for col in Entrenamiento.columns if col!='FECHA'])
-    cuentas_objetivo = [col for col in Entrenamiento.columns if col != 'FECHA']  #selecciona las cuentas objetivo con SI ya previamente procesadas
+    #print([col for col in df.columns if col!='FECHA'])
+    cuentas_objetivo = [col for col in df.columns if col != 'FECHA']  #selecciona las cuentas objetivo con SI ya previamente procesadas}
     for cuenta_objetivo in cuentas_objetivo:
         print(cuenta_objetivo)
         Entrenamiento_filtrado= Entrenamiento[['FECHA', cuenta_objetivo]]
-        #print(Entrenamiento_filtrado)
         Pruebas_filtrado = Pruebas[['FECHA', cuenta_objetivo]]
         Validation_filtrado = Validation[['FECHA', cuenta_objetivo]]
-        #print(Entrenamiento[cuenta_objetivo])
         fechaPrueba_filtrado = Pruebas['FECHA']
         # Definimos la ventana de meses para usar como input
         flag_ventana = True  # <- CAMBIA AQUÍ según lo necesites
@@ -108,11 +108,23 @@ def main(institucion: int, sucursal:int, templateid:int):
             y_test = y_test.values.reshape(-1, 1)
 
 
+            # ---- NUEVO: calcular proporción de ceros ----
+        zero_ratio = (y_train == 0).sum() / len(y_train)
+        print(f"Proporción de ceros en {cuenta_objetivo}: {zero_ratio:.2%}")
+
+        # Si tiene más del 70% de ceros -> usar SOLO ZeroInflatedPoisson
+        if zero_ratio > 0.7:
+            modelos_a_entrenar = {"ZeroInflatedPoisson": models["ZeroInflatedPoisson"]}
+        else:
+            modelos_a_entrenar = models  # usa todos los modelos definidos
+
+        # ---- Entrenamiento ----
+
         model_scores = {}
         viz = FinancialVisualizer()
         rows = []
         tempmodels = {}
-        for name, model_obj in models.items():
+        for name, model_obj in modelos_a_entrenar.items():
             print(f"Entrenando {name}...")
             if 'PSO' in name:
                 best_model = model_obj.train(X_train, y_train, iters=100, swarm_size=200)
@@ -188,7 +200,7 @@ def main(institucion: int, sucursal:int, templateid:int):
         rank=0
         # Mostrar resultados ordenados
         for i, (model, metrics) in enumerate(sorted_by_r2.items()):
-            if i >= 3:
+            if i >= 2:
                 break
             print(f"{model}: R2 = {metrics['R2']:.4f}")
             nombre_modelo=f"{model}_{templateid}_{cuenta_objetivo}.pkl"
@@ -235,8 +247,6 @@ def main(institucion: int, sucursal:int, templateid:int):
         for name, score in model_scores.items():
             print(f"{name}: MSE={score['MSE']:.2f}, R²={score['R2']:.3f}")
     
-
-
 if __name__ == "__main__":
     # Validar que se pase un argumento entero
     if len(sys.argv) != 4:
