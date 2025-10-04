@@ -200,7 +200,7 @@ def main(institucion: int, sucursal:int, templateid:int):
         rank=0
         # Mostrar resultados ordenados
         for i, (model, metrics) in enumerate(sorted_by_r2.items()):
-            if i >= 2:
+            if i >= 3:
                 break
             print(f"{model}: R2 = {metrics['R2']:.4f}")
             nombre_modelo=f"{model}_{templateid}_{cuenta_objetivo}.pkl"
