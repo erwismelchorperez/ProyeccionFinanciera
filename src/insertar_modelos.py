@@ -1,17 +1,18 @@
-import psycopg2
+import psycopg
+from psycopg.rows import dict_row  # opcional, filas como dict
 import json
 
 DB_PARAMS = {
     "host": "localhost",
     "port": 5432,
-    "dbname": "bdproyeccion",
+    "dbname": "-",
     "user": "antonio",
-    "password": "proyecc10n35"
+    "password": "-"
 }
 
 def get_connection():
     """Crea y retorna una conexión a la BD."""
-    return psycopg2.connect(**DB_PARAMS)
+    return psycopg.connect(**DB_PARAMS)
 
 def insertar_modelo(cuentaid: int, modelo: str, ubicacion: str, variables: dict = None):
     """

@@ -20,7 +20,7 @@ import joblib
 import json
 import os
 import sys
-import psycopg2
+import psycopg
 from sklearn.model_selection import train_test_split
 
 
