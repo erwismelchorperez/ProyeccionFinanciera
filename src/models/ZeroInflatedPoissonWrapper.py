@@ -67,10 +67,10 @@ class ZeroInflatedPoissonWrapper:
             else:
                 entrada = np.array([historial[-1]], dtype=float).reshape(1, -1)
 
-            # ✅ Escalar entrada
+            # Escalar entrada
             entrada = self.scaler_X.transform(entrada)
 
-            # ✅ Agregar constante
+            #  Agregar constante
             entrada = sm.add_constant(entrada, has_constant='add')
 
             # Predecir
