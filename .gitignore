@@ -12,6 +12,10 @@ __pycache__/
 
 *.png
 *.pkl
+# Model artifacts
+*.joblib
+*.dpkgl
+
 
 gitcommit
 *.dump
