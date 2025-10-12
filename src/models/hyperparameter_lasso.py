@@ -18,6 +18,7 @@ class HyperparameterLasso:
         grid = GridSearchCV(Lasso(max_iter=10000), self.param_grid, cv=10, scoring='neg_mean_squared_error', n_jobs=-1)
         grid.fit(X_train, y_train)
         self.best_model = grid.best_estimator_
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):
@@ -94,6 +95,7 @@ class HyperparameterLasso_PSO:
         # Entrenar el mejor modelo encontrado
         self.best_model = Lasso(alpha=best_alpha[0], max_iter=10000)
         self.best_model.fit(self.X_train_scaled, self.y_train_scaled)
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):

@@ -1,3 +1,7 @@
+import os
+os.environ["MPLBACKEND"] = "Agg"      # evita Tk
+import matplotlib
+matplotlib.use("Agg")                 # <-- debe ir antes de importar pyplot
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -5,7 +9,7 @@ import pandas as pd
 
 class FinancialVisualizer:
     @staticmethod
-    def plot_predictions(fechas, y_true, y_pred, title='Predicción vs Real', save_path=None):
+    def plot_predictions(fechas, y_true, y_pred, title='Predicción vs Real', save_path=None,show=False):
         # Convertir a arrays si son Series
         if isinstance(y_true, (pd.Series, list)): y_true = np.array(y_true)
         if isinstance(y_pred, (pd.Series, list)): y_pred = np.array(y_pred)
@@ -22,11 +26,11 @@ class FinancialVisualizer:
 
         if save_path:
             plt.savefig(save_path)
-            plt.close()
-        else:
+        if show:
             plt.show()
+        plt.close()
     @staticmethod
-    def plot_multiple_predictions(fechas_test, y_test, results_dict, title="Comparación de modelos", save_path=None):
+    def plot_multiple_predictions(fechas_test, y_test, results_dict, title="Comparación de modelos", save_path=None,show=False):
         """
         results_dict: diccionario con estructura {'NombreModelo': {'y_pred': predicciones, ...}, ...}
         """
@@ -49,7 +53,9 @@ class FinancialVisualizer:
         if save_path:
             plt.savefig(save_path)
             print(f"📈 Gráfico guardado en {save_path}")
-        plt.show()
+        if show:
+            plt.show()
+        plt.close()
     @staticmethod
     def plot_model_errors(model_scores, save_path=None):
         names = list(model_scores.keys())
@@ -64,9 +70,9 @@ class FinancialVisualizer:
 
         if save_path:
             plt.savefig(save_path)
-            plt.close()
         else:
             plt.show()
+        plt.close()
     @staticmethod
     def plot_model_errors_boxplot(model_scores, save_path=None):
         # Preparar DataFrame para seaborn
@@ -85,6 +91,6 @@ class FinancialVisualizer:
 
         if save_path:
             plt.savefig(save_path)
-            plt.close()
         else:
             plt.show()
+        plt.close()

@@ -5,9 +5,9 @@ import json
 DB_PARAMS = {
     "host": "localhost",
     "port": 5432,
-    "dbname": "-",
+    "dbname": "bdproyeccion",
     "user": "antonio",
-    "password": "-"
+    "password": "proyecc10n35"
 }
 
 def get_connection():

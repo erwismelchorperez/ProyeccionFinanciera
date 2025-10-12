@@ -27,6 +27,7 @@ class HyperparameterLinear:
         y_train = self.scaler_y.fit_transform(y_train.reshape(-1, 1)).ravel()
         self.grid_search.fit(X_train, y_train)
         self.best_model = self.grid_search.best_estimator_
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):
@@ -107,6 +108,7 @@ class HyperparameterLinear_PSO:
 
         self.best_model = LinearRegression(fit_intercept=fit_intercept, positive=positive)
         self.best_model.fit(self.X_train_scaled, self.y_train_scaled)
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):
@@ -130,7 +132,7 @@ class HyperparameterLinear_PSO:
             'MEDAE': medae
         }
 
-    def predecir_futuro(self, modelo, historial_inicial, meses_a_predecir=12, ventana=3, flag_ventana = True):
+    def predecir_futuro(self, modelo=None, historial_inicial=None, meses_a_predecir=12, ventana=3, flag_ventana = True):
         """
         Predice valores futuros de forma autoregresiva.
         
@@ -139,6 +141,10 @@ class HyperparameterLinear_PSO:
         meses_a_predecir: número de predicciones a generar
         ventana: tamaño de la ventana temporal
         """
+        if modelo is None:
+            modelo = getattr(self, "model", None) or getattr(self, "result", None)
+        if modelo is None or not hasattr(modelo, "predict"):
+            raise AttributeError("No hay modelo interno entrenado disponible (self.model) con .predict().")
         historial = list(historial_inicial)  # convertir a lista para manejar crecimiento
         predicciones = []
         

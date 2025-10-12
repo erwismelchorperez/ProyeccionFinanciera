@@ -9,6 +9,7 @@ class HyperparameterRidge:
         self.param_grid = {
             'alpha': [0.1, 1.0, 10.0]
         }
+        self.model = None
         self.scaler_X = MinMaxScaler()
         self.scaler_y = MinMaxScaler()
 
@@ -18,6 +19,7 @@ class HyperparameterRidge:
         grid = GridSearchCV(Ridge(), self.param_grid, cv=10, scoring='neg_mean_squared_error', n_jobs=-1)
         grid.fit(X_train, y_train)
         self.best_model = grid.best_estimator_
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):
@@ -94,6 +96,7 @@ class HyperparameterRidge_PSO:
         alpha = float(best_position[0])
         self.best_model = Ridge(alpha=alpha)
         self.best_model.fit(self.X_train_scaled, self.y_train_scaled)
+        self.model=self.best_model;
         return self.best_model
 
     def evaluate(self, model, X_test, y_test):
