@@ -273,12 +273,14 @@ def main(institucion: int, sucursal:int, templateid:int):
             # Dentro del loop donde guardas modelos
             cuentaid = codigo_to_id.get(cuenta_objetivo)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{cuenta_objetivo}"
+            '''
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,
                     modelo=nombre_modelo_bd,
                     ubicacion=ruta_modelo_matriz
                 )
+            '''
             i=i+1;
 
         #viz.plot_multiple_predictions(fechas_test, y_test, model_scores, title="Modelos - Real vs Predicho", save_path="plots/comparacion_" + cuenta_objetivo + "_modelos_"+str(flag_ventana)+".png")
