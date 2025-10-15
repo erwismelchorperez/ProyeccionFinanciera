@@ -3,7 +3,7 @@ import pandas as pd
 from .loader_datasets import BaseLoader
 from .utils import parse_ddmmyyyy, format_mes_yy, to_numeric, drop_cols, to_numeric_except
 
-class ExtraLoader(BaseLoader):
+class variableLoader(BaseLoader):
     def load(self, path: str) -> pd.DataFrame:
         return pd.read_csv(path)
 
