@@ -41,7 +41,7 @@ def run(institucion: int,sucursal:int,templateid:id):
     "TCN": TCNWrapper(),     #
     "MLP": MLPSeriesWrapper()
     }
-    proyeccionFinanciera=Loader("/home/antonio/Documents/Code/JOb/ProyeccionFinanciera/dataset/Estados_FinancierosGaby_proyeccion.csv")
+    proyeccionFinanciera=Loader("./dataset/Estados_FinancierosGaby_proyeccion.csv")
     proyeccionFinanciera.load_data()
     #cuentas=[col for col in self.dataset_aumentado.columns if col!='date']
     # Convertimos todo a numérico (por seguridad) sin romper el shape
