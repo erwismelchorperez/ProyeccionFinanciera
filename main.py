@@ -271,9 +271,10 @@ def main(institucion: int, sucursal:int, templateid:int):
                 #guardar_modelo(templateid[model],os.path.join(cuenta_dir,nombre_modelo)); #sucursal particula
                 joblib.dump(obj, ruta_sucursal, compress=3)
             # Dentro del loop donde guardas modelos
+            '''
             cuentaid = codigo_to_id.get(cuenta_objetivo)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{cuenta_objetivo}"
-            '''
+            
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,

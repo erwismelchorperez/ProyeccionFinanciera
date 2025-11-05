@@ -5,9 +5,9 @@ import json
 DB_PARAMS = {
     "host": "localhost",
     "port": 5432,
-    "dbname": "-",
-    "user": "-",
-    "password": "-"
+    "dbname": "proyecciones",
+    "user": "postgres",
+    "password": "proyecc10n35"
 }
 
 def get_connection():
