@@ -27,3 +27,19 @@ xgboost==3.0.2
 psycopg[binary]>=3.2,<4
 statsmodels>=0.12
 lightgbm>=4.3,<5
+# series con modelos estadísticos
+statsmodels>=0.14
+# time series / HMM (lo mencionamos)
+hmmlearn>=0.3.2
+# para descargar datos bursátiles (la usaste)
+yfinance>=0.2.40
+# para escribir Excel y reabrirlo
+openpyxl>=3.1
+xlsxwriter>=3.2
+# gradient boosting (porque tienes wrappers LightGBM_...)
+lightgbm>=4.3
+# TCN que cargas así: from tcn import TCN
+keras-tcn>=3.5
+# si guardas modelos con joblib explícito
+joblib>=1.4
+pyswarms>=1.3
