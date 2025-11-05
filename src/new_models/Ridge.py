@@ -208,4 +208,4 @@ class HyperparameterRidge_PSO:
             preds.append(yhat)
             hist.append(yhat)
 
-        return np.array(predicciones, float)
+        return np.array(preds, float)
