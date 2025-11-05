@@ -2,7 +2,6 @@ from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tien
 import pandas as pd
 from src.data_loader_ import Loader
 import numpy as np
-import pandas as pd;
 import datetime as dt
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
@@ -22,8 +21,6 @@ from src.resumen import exportar_predicciones_y_resumen,exportar_predicciones_y_
 import joblib
 import sys
 import time
-import numpy as np
-import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
