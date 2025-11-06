@@ -28,7 +28,7 @@ from sklearn.metrics import mean_squared_error
 def run(institucion: int,sucursal:int,templateid:id):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
     models = {
-    "ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
+    #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
     "Lightgbm": LightGBM_TweedieSeriesWrapper(),
     "TwoPart": TwoPartHurdleWrapper(nonzero_label=True),
     "Lasso": HyperparameterLasso(),
@@ -370,6 +370,17 @@ def run(institucion: int,sucursal:int,templateid:id):
             if sucursal != 0:
                 ruta_sucursal = os.path.join(cuenta_dir, nombre_modelo)
                 joblib.dump(obj, ruta_sucursal, compress=3)
+            '''
+            cuentaid = codigo_to_id.get(cuenta_objetivo)
+            nombre_modelo_bd=f"modelo{rank}_{templateid}_{cuenta_objetivo}"
+            
+            if cuentaid:
+                insertar_modelo(
+                    cuentaid=cuentaid,
+                    modelo=nombre_modelo_bd,
+                    ubicacion=ruta_modelo_matriz
+                )
+            '''
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
