@@ -69,12 +69,13 @@ def run(institucion: int,sucursal:int,templateid:id):
     # Si solo una para probar:
     # cols = ['101']
     iter=0;
+    output_xlsx ="predicciones_V2.xlsx"
     for col in cols:
         # 1) inicializa los contenedores PARA ESTA CUENTA
         model_scores     = {}   # métricas de cada modelo
         fitted_wrappers  = {}   # el wrapper entrenado
         tempmodels       = {}   # modelo crudo (sklearn/keras)
-        #col = str(10403)#col = str(106010102) #108 #103
+        #col = str(30205)#col = str(106010102) #108 #103
         col = str(col)
         if col not in df_mensual.columns.astype(str).tolist():
             print(f"'{col}' no existe, salto.")
@@ -98,19 +99,19 @@ def run(institucion: int,sucursal:int,templateid:id):
         # 1) todo cero → no aumento
         if all_zero_val:
             print(f"[{col}] toda la serie es 0 → no aumento, usar AlwaysZero o saltar.")
-            # recorta el real al tramo de test
-            real_tramo = serie_mensual.loc[TEST_START:TEST_END].copy()
-            # si por alguna razón está vacío, puedes tomar los últimos N meses
-            if real_tramo.empty:
-                real_tramo = serie_mensual.iloc[-15:].copy()
 
-            # predicción = ceros del mismo tamaño
-            y_true = real_tramo.values.astype(float)
+            # usa el DF (real_cuenta) para sacar el tramo
+            real_tramo_df = real_cuenta.loc[TEST_START:TEST_END].copy()
+            if real_tramo_df.empty:
+                # si no hay ese rango, toma últimos 15 meses del DF
+                real_tramo_df = real_cuenta.iloc[-15:].copy()
+
+            # ahora sí, esto es un DF con col "real"
+            y_true = real_tramo_df["real"].values.astype(float)
             y_pred = np.zeros_like(y_true, dtype=float)
-            idx    = real_tramo.index
+            idx    = real_tramo_df.index
 
-            # métrica trivial
-            mse  = float(np.mean((y_true - y_pred)**2))
+            mse  = float(np.mean((y_true - y_pred) ** 2))
             rmse = float(np.sqrt(mse))
 
             model_scores["AlwaysZero"] = {
@@ -120,19 +121,18 @@ def run(institucion: int,sucursal:int,templateid:id):
                 "RMSE": rmse,
                 "cuenta": col,
                 "modelo": "AlwaysZero",
-                # opcional: ya le mandamos el índice para que el export no invente fechas
                 "idx": idx,
             }
 
-            # y aun así llamas al export
             exportar_predicciones_y_resumen_solo_mejor(
                 cuenta=col,
-                real_full=serie_mensual.to_frame(name="real"),
+                real_full=real_cuenta,            # DF con columna 'real'
                 model_scores=model_scores,
-                output_path=f"predicciones_.xlsx",
+                output_path=output_xlsx,
                 meses_objetivo=15,
                 real_desde="2024-02-01",
             )
+            # pasar a la siguiente cuenta
             continue
 
         # 2) tiene ceros al inicio → aumentar solo después de esos ceros
@@ -168,9 +168,6 @@ def run(institucion: int,sucursal:int,templateid:id):
         print(modelos_a_entrenar)
         
         # 4) entrenar modelo por modelo
-        model_scores     = {}
-        fitted_wrappers  = {}
-        tempmodels       = {}
         # ---------------------------------------------------------------------
         for name, model_obj in modelos_a_entrenar.items():
             try:
@@ -320,7 +317,7 @@ def run(institucion: int,sucursal:int,templateid:id):
                 cuenta=col,
                 real_full=real_cuenta,
                 model_scores=model_scores,
-                output_path=f"predicciones_.xlsx",
+                output_path=output_xlsx,
             )
 
             # si tienes el index del tramo de test (del TCN o del split)
