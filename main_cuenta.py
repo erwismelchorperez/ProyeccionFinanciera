@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 from src.storage import crear_carpeta_cuenta,crear_carpeta_institucion,guardar_modelo
-from src.resumen import exportar_predicciones_y_resumen,exportar_predicciones_y_resumen_solo_mejor
 from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
 import joblib
 import sys
@@ -33,6 +32,7 @@ def run(institucion: int,sucursal:int,templateid:int):
     from src.new_models.MLP import MLPSeriesWrapper
     from src.new_models.TwoPart import TwoPartHurdleWrapper
     from src.new_models.LightGBM import LightGBM_TweedieSeriesWrapper
+    from src.resumen import exportar_predicciones_y_resumen,exportar_predicciones_y_resumen_solo_mejor
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
     "Lightgbm": LightGBM_TweedieSeriesWrapper(),
