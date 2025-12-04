@@ -18,6 +18,7 @@ from src.new_models.TwoPart import TwoPartHurdleWrapper
 from src.new_models.LightGBM import LightGBM_TweedieSeriesWrapper
 from src.storage import crear_carpeta_cuenta,crear_carpeta_institucion,guardar_modelo
 from src.resumen import exportar_predicciones_y_resumen,exportar_predicciones_y_resumen_solo_mejor
+from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
 import joblib
 import sys
 import time
@@ -27,6 +28,9 @@ from sklearn.metrics import mean_squared_error
 
 def run(institucion: int,sucursal:int,templateid:id):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
+    #consulta
+    codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
+
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
     "Lightgbm": LightGBM_TweedieSeriesWrapper(),
@@ -75,8 +79,8 @@ def run(institucion: int,sucursal:int,templateid:id):
         model_scores     = {}   # métricas de cada modelo
         fitted_wrappers  = {}   # el wrapper entrenado
         tempmodels       = {}   # modelo crudo (sklearn/keras)
-        col = str(101)#col = str(106010102) #108 #103
-        #col = str(col)
+        #col = str(101)#col = str(106010102) #108 #103
+        col = str(col)
         if col not in df_mensual.columns.astype(str).tolist():
             print(f"'{col}' no existe, salto.")
             continue
@@ -367,9 +371,9 @@ def run(institucion: int,sucursal:int,templateid:id):
             if sucursal != 0:
                 ruta_sucursal = os.path.join(cuenta_dir, nombre_modelo)
                 joblib.dump(obj, ruta_sucursal, compress=3)
-            '''
-            cuentaid = codigo_to_id.get(cuenta_objetivo)
-            nombre_modelo_bd=f"modelo{rank}_{templateid}_{cuenta_objetivo}"
+            
+            cuentaid = codigo_to_id.get(col)
+            nombre_modelo_bd=f"modelo{rank}_{templateid}_{col}"
             
             if cuentaid:
                 insertar_modelo(
@@ -377,8 +381,8 @@ def run(institucion: int,sucursal:int,templateid:id):
                     modelo=nombre_modelo_bd,
                     ubicacion=ruta_modelo_matriz
                 )
-            '''
-        break
+            
+        #break
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
