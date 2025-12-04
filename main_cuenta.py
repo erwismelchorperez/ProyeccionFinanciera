@@ -26,11 +26,13 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
-def run(institucion: int,sucursal:int,templateid:id):
+def run(institucion: int,sucursal:int,templateid:int):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
     #consulta
+    print("INICIO")
     codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
-
+    
+    print("---------------------------------------")
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
     "Lightgbm": LightGBM_TweedieSeriesWrapper(),
