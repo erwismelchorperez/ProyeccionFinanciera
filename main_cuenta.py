@@ -1,4 +1,4 @@
-from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export
+
 import pandas as pd
 from src.data_loader_ import Loader
 import numpy as np
@@ -6,7 +6,6 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
-from src.new_models.TCN import TCNWrapper
 from src.new_models.LSTM import LSTMWrapper
 from src.new_models.Linearmodel import HyperparameterLinear,HyperparameterLinear_PSO
 from src.new_models.AlwaysZero import AlwaysZeroWrapper
@@ -31,8 +30,9 @@ def run(institucion: int,sucursal:int,templateid:int):
     #consulta
     print("INICIO")
     codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
-    
     print("---------------------------------------")
+    from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export
+    from src.new_models.TCN import TCNWrapper
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
     "Lightgbm": LightGBM_TweedieSeriesWrapper(),
