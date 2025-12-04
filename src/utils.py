@@ -18,6 +18,88 @@ import sys, subprocess
 import os
 
 MESES_ES = {1:'ene',2:'feb',3:'mar',4:'abr',5:'may',6:'jun',7:'jul',8:'ago',9:'sep',10:'oct',11:'nov',12:'dic'}
+#VARIABLES
+def leer_variables(ruta: str) -> pd.DataFrame:
+    """
+    Lee un CSV de variables macro con una columna de fecha y varias columnas numéricas.
+    Devuelve un DataFrame con índice mensual al inicio de mes (MS).
+    """
+    df = pd.read_csv(ruta)
+
+    # normalizar nombres
+    df.columns = (
+        df.columns.astype(str)
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "_")
+    )
+
+    # detectar columna de fecha
+    posibles_fechas = ["fecha", "date", "mes"]
+    fecha_col = next((c for c in posibles_fechas if c in df.columns), None)
+    if fecha_col is None:
+        raise ValueError("No encontré columna de fecha (busqué: fecha, date, mes).")
+
+    # parsear fecha (tus datos son dd/mm/yyyy)
+    df[fecha_col] = pd.to_datetime(df[fecha_col], dayfirst=True, errors="coerce")
+    df = df.dropna(subset=[fecha_col]).set_index(fecha_col).sort_index()
+
+    # pasar de "último día del mes" a "primer día del mes"
+    # 1) convertir a periodo mensual
+    pi = df.index.to_period("M")
+    # 2) volver a timestamp al INICIO del periodo
+    df.index = pi.to_timestamp(how="start")   # esto te da 2013-01-01, 2013-02-01, ...
+
+    # convertir columnas a numérico
+    for c in df.columns:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    # aseguramos frecuencia mensual (no rellenamos valores)
+    df = df.asfreq("MS")
+
+    return df
+
+
+def splitsTrainTest_from_df(df: pd.DataFrame,
+                            target_col: str,
+                            n_lags: int = 3,
+                            train_start=None,
+                            train_end=None):
+    d = df.copy()
+
+    # asegurar datetime
+    if not isinstance(d.index, pd.DatetimeIndex):
+        d.index = pd.to_datetime(d.index)
+    d = d.sort_index()
+
+    # lags del target
+    for k in range(1, n_lags + 1):
+        d[f"{target_col}_lag{k}"] = d[target_col].shift(k)
+
+    # quitar NaN por lags
+    d = d.dropna()
+
+    y = d[target_col].astype(float).values
+    X = d.drop(columns=[target_col]).astype(float).values
+    idx = d.index
+
+    if train_start is not None and train_end is not None:
+        mask_train = (idx >= train_start) & (idx <= train_end)
+    else:
+        n = len(d)
+        n_train = int(n * 0.8)
+        mask_train = np.zeros(n, bool)
+        mask_train[:n_train] = True
+
+    X_train = X[mask_train]
+    y_train = y[mask_train]
+    X_test  = X[~mask_train]
+    y_test  = y[~mask_train]
+
+    idx_train = idx[mask_train]
+    idx_test  = idx[~mask_train]
+    return X_train, y_train, X_test, y_test, idx_train, idx_test
+
 
 def parse_ddmmyyyy(s):
     return pd.to_datetime(s, dayfirst=True, errors='coerce')
@@ -856,10 +938,81 @@ def plot_serie_completa_con_model_scores(
         print(f"[OK] gráfica guardada en: {save_path}")
 
     # mostrar igual
-    #plt.show()
+    plt.show()
 
 
-def plot_resultados_modelos(res_dict, titulo="Comparación modelos"):
+def plot_cuenta_completa_vs__model_scores(
+    real_full: pd.Series | pd.DataFrame,
+    model_scores: dict,
+    test_index: pd.DatetimeIndex | None = None,
+    titulo: str = "Serie completa + modelos"
+):
+    if not model_scores:
+        print("model_scores está vacío, no hay nada que graficar.")
+        return
+
+    # --- real a serie ---
+    if isinstance(real_full, pd.DataFrame):
+        if real_full.shape[1] != 1:
+            raise ValueError("real_full tiene varias columnas; pásame solo la columna de esa cuenta.")
+        real_series = real_full.iloc[:, 0]
+    else:
+        real_series = real_full
+
+    if not isinstance(real_series.index, pd.DatetimeIndex):
+        real_series.index = pd.to_datetime(real_series.index)
+
+    plt.figure(figsize=(13, 5))
+    plt.plot(real_series.index, real_series.values,
+             label="Real (completa)", color="black", linewidth=1.6)
+
+    palette = [
+        "tab:orange", "tab:green", "tab:red", "tab:purple",
+        "tab:blue", "tab:brown", "tab:pink", "tab:gray",
+    ]
+    color_iter = iter(palette)
+
+    for name, res in model_scores.items():
+        if "y_pred" not in res:
+            continue
+
+        y_pred = np.asarray(res["y_pred"]).ravel()
+
+        # 1) si el modelo ya trae su índice, úsalo
+        if "idx" in res and res["idx"] is not None:
+            idx = pd.to_datetime(res["idx"])
+            m = min(len(idx), len(y_pred))
+            idx = idx[:m]
+            vals = y_pred[:m]
+        # 2) si el usuario pasó test_index al plot, úsalo
+        elif test_index is not None:
+            m = min(len(test_index), len(y_pred))
+            idx = test_index[:m]
+            vals = y_pred[:m]
+        # 3) fallback: pegar al final del real
+        else:
+            m = min(len(real_series), len(y_pred))
+            idx = real_series.index[-m:]
+            vals = y_pred[-m:]
+
+        plt.plot(
+            idx,
+            vals,
+            label=name,
+            linewidth=1.8,
+            color=next(color_iter, None)
+        )
+
+    plt.title(titulo)
+    plt.xlabel("Fecha")
+    plt.ylabel("Valor")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_resultados_modelos(res_dict, titulo="Comparación modelos",plots_dir: str | None = None,filename: str | None = None):
     """
     res_dict: diccionario como el que mostraste:
       {
@@ -912,7 +1065,17 @@ def plot_resultados_modelos(res_dict, titulo="Comparación modelos"):
     plt.grid(True, alpha=0.3)
     plt.legend()
     plt.tight_layout()
-    #plt.show()
+    # --- 4) guardar si se pidió ---
+    if plots_dir is not None:
+        os.makedirs(plots_dir, exist_ok=True)
+        if filename is None:
+            # algo simple a partir del título
+            safe_title = titulo.lower().replace(" ", "_").replace("—", "_").replace("–", "_")
+            filename = f"{safe_title}.png"
+        save_path = os.path.join(plots_dir, filename)
+        plt.savefig(save_path, dpi=150)
+        print(f"[OK] gráfica guardada en: {save_path}")
+    plt.show()
 
 def escalar(df_3por_mes):
     # 1) Preprocesado: SOLO asinh (acepta negativos)

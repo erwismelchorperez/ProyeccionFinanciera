@@ -66,10 +66,12 @@ class HyperparameterLinear:
                         historial_inicial=None,
                         meses_a_predecir=12,
                         ventana=None,
-                        flag_ventana=None):
+                        flag_ventana=None,
+                        ultimas_vars=None):
         """
-        Autoregresivo con misma lógica que tus otros wrappers.
-        historial_inicial debe venir en **ESCALA ORIGINAL** (los valores reales).
+        historial_inicial: últimos valores de la SERIE (escala original)
+        ultimas_vars: np.array de las últimas variables exógenas usadas en train.
+                      Puede ser None si entrenaste solo con la serie.
         """
         if modelo is None:
             if self.model is None:
@@ -82,17 +84,39 @@ class HyperparameterLinear:
         hist = list(map(float, np.ravel(historial_inicial)))
         preds = []
 
-        for _ in range(meses_a_predecir):
-            if flag_ventana:
-                entrada = np.array(hist[-ventana:], float).reshape(1, -1)
-            else:
-                entrada = np.array([hist[-1]], float).reshape(1, -1)
+        # cuántas columnas esperaba el scaler al entrenar
+        n_feats_entreno = self.scaler_X.n_features_in_
 
-            # escalar X
+        for _ in range(meses_a_predecir):
+            # 1) parte de la serie
+            if flag_ventana:
+                entrada_serie = np.array(hist[-ventana:], float).reshape(1, -1)
+            else:
+                entrada_serie = np.array([hist[-1]], float).reshape(1, -1)
+
+            # 2) si en train hubo más columnas, las agregamos
+            if entrada_serie.shape[1] < n_feats_entreno:
+                faltan = n_feats_entreno - entrada_serie.shape[1]
+
+                if ultimas_vars is None:
+                    extras = np.zeros((1, faltan), float)
+                else:
+                    extras = np.array(ultimas_vars, float).reshape(1, -1)
+                    # recorta o rellena
+                    if extras.shape[1] > faltan:
+                        extras = extras[:, :faltan]
+                    elif extras.shape[1] < faltan:
+                        extras = np.concatenate(
+                            [extras, np.zeros((1, faltan - extras.shape[1]))],
+                            axis=1
+                        )
+                entrada = np.concatenate([entrada_serie, extras], axis=1)
+            else:
+                entrada = entrada_serie
+
+            # 3) escalar y predecir
             entrada_s = self.scaler_X.transform(entrada)
-            # predecir en escala y escalada
             yhat_s = modelo.predict(entrada_s)[0]
-            # desescalar
             yhat = self.scaler_y.inverse_transform([[yhat_s]])[0][0]
 
             preds.append(yhat)

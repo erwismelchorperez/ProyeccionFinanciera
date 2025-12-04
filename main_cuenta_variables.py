@@ -1,4 +1,4 @@
-from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export
+from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export,splitsTrainTest_from_df,plot_cuenta_completa_vs__model_scores
 import pandas as pd
 from src.data_loader_ import Loader
 import numpy as np
@@ -6,14 +6,15 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
-from src.new_models.TCN import TCNWrapper
-from src.new_models.LSTM import LSTMWrapper
+#from src.new_models.TCN import TCNWrapper
+from src.new_models.TCN_variables import TCNWrapper
+from src.new_models.LSTM_variables import LSTMWrapper
 from src.new_models.Linearmodel import HyperparameterLinear,HyperparameterLinear_PSO
 from src.new_models.AlwaysZero import AlwaysZeroWrapper
 from src.new_models.Ridge import HyperparameterRidge,HyperparameterRidge_PSO
 from src.new_models.ZeroInflatedPoissonWrapper import ZeroInflatedPoissonWrapper
 from src.new_models.Lasso import HyperparameterLasso,HyperparameterLasso_PSO
-from src.new_models.MLP import MLPSeriesWrapper
+from src.new_models.MLP_variables import MLPSeriesWrapper
 from src.new_models.TwoPart import TwoPartHurdleWrapper
 from src.new_models.LightGBM import LightGBM_TweedieSeriesWrapper
 from src.storage import crear_carpeta_cuenta,crear_carpeta_institucion,guardar_modelo
@@ -25,25 +26,41 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
-def run(institucion: int,sucursal:int,templateid:id):
+def run(institucion: int,sucursal:int,templateid:id,var_idx: list[int] | None = None):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
-    "Lightgbm": LightGBM_TweedieSeriesWrapper(),
-    "TwoPart": TwoPartHurdleWrapper(nonzero_label=True),
-    "Lasso": HyperparameterLasso(),
-    "LassoPSO": HyperparameterLasso_PSO(),
-    "Linear": HyperparameterLinear(),
-    "LinearPSO": HyperparameterLinear_PSO(),
-    "Ridge": HyperparameterRidge(),
-    "RidgePSO": HyperparameterRidge_PSO(),
+    #"Lightgbm": LightGBM_TweedieSeriesWrapper(),
+    #"TwoPart": TwoPartHurdleWrapper(nonzero_label=True),
+    #"Lasso": HyperparameterLasso(),
+    #"LassoPSO": HyperparameterLasso_PSO(),
+    #"Linear": HyperparameterLinear(),
+    #"LinearPSO": HyperparameterLinear_PSO(),
+    #"Ridge": HyperparameterRidge(),
+    #"RidgePSO": HyperparameterRidge_PSO(),
     "LSTM": LSTMWrapper(),
     "TCN": TCNWrapper(),     #
     "MLP": MLPSeriesWrapper()
     }
-    proyeccionFinanciera=Loader("./dataset/Estados_FinancierosGaby_proyeccion.csv")
+    proyeccionFinanciera=Loader("./dataset/PRUEBA.csv","./dataset/Financiero_MultivariableGaby.csv")
+    #proyeccionFinanciera=Loader("./dataset/Estados_FinancierosGaby_proyeccion.csv","./dataset/Financiero_MultivariableGaby.csv")
     proyeccionFinanciera.load_data()
+    proyeccionFinanciera.load_data_variables()
+    dataset_variables=proyeccionFinanciera.getDatasetVariables()
+    vars_sel = None
+    var_names = []
+    if var_idx:
+        vars_sel = proyeccionFinanciera.select_variables(var_idx)   # <- DataFrame con esas columnas
+        var_names = list(vars_sel.columns)                         # ['infla_anual', 'tipo_cambio_dolar', ...]
+    else:
+        vars_sel = None
+        var_names = []
     #cuentas=[col for col in self.dataset_aumentado.columns if col!='date']
+    # Convertimos todo a numérico (por seguridad) sin romper el shape
+    
+    print(dataset_variables)
+    print("variables")
+    print(vars_sel)
     dataset=proyeccionFinanciera.getDataset()
     df_num = dataset.apply(pd.to_numeric, errors="coerce").fillna(0.0)
     
@@ -69,13 +86,13 @@ def run(institucion: int,sucursal:int,templateid:id):
     s_map = {}
     splits = {}
     train_ratio = 0.8
-    output_xlsx ="predicciones_V3.xlsx"
+    output_xlsx ="predicciones_prueba.xlsx"
     for col in cols:
         # 1) inicializa los contenedores PARA ESTA CUENTA
         model_scores     = {}   # métricas de cada modelo
         fitted_wrappers  = {}   # el wrapper entrenado
         tempmodels       = {}   # modelo crudo (sklearn/keras)
-        col = str(101)#col = str(106010102) #108 #103
+        col = str(10)#col = str(106010102) #108 #103
         #col = str(col)
         if col not in df_mensual.columns.astype(str).tolist():
             print(f"'{col}' no existe, salto.")
@@ -84,6 +101,7 @@ def run(institucion: int,sucursal:int,templateid:id):
         # 2) serie mensual de esa cuenta
         serie_mensual = df_mensual[col].astype(float)
         real_cuenta = df_mensual[[col]].rename(columns={col: "real"})
+        
         # 3) validaciones sobre la serie ORIGINAL (mensual)
         all_zero_val   = all_zero(serie_mensual)
         has_neg    = tiene_negativos(serie_mensual)
@@ -155,7 +173,31 @@ def run(institucion: int,sucursal:int,templateid:id):
         # esta es la que usarán los modelos “densos”
         x_diaria = serie_diaria.to_frame(name=col)
         print(x_diaria)
-        
+
+        # === SOLO si hay variables seleccionadas ===
+        if vars_sel is not None and not vars_sel.empty:
+            # las variables venían diarias ya alineadas al aumento
+            vars_diarias = vars_sel.reindex(x_diaria.index, method="ffill")
+            # las bajo a mensual para los modelos clásicos
+            vars_mensuales = vars_diarias.resample("MS").mean()
+            # armo el df mensual cuenta + variables
+            df_modelo_mensual = pd.concat(
+                [serie_mensual.to_frame(name=col), vars_mensuales],
+                axis=1
+            )
+            # 4) df diario = cuenta diaria + vars diarias
+            df_modelo_diario = pd.concat(
+                [x_diaria, vars_diarias],   # <- aquí ya NO .to_frame
+                axis=1
+            )
+        else:
+            vars_diarias=None
+            # no hay variables → el modelo clásico trabaja solo con la cuenta
+            df_modelo_mensual = serie_mensual.to_frame(name=col)
+            df_modelo_diario = x_diaria  # por si quieres usarlo en el caso A
+        #  samos reindex con method='ffill' para alinear las variables con la cuenta
+        #vars_diarias = vars_sel.reindex(x_diaria.index, method="ffill")
+        print(vars_diarias)
         modelos_a_entrenar = choose_models(
             models,
             all_zero_val=all_zero_val,
@@ -166,7 +208,6 @@ def run(institucion: int,sucursal:int,templateid:id):
             high_zero_thresh=0.50
         )
         print(modelos_a_entrenar)
-        
         # 5) entrenar modelo por modelo
         # ---------------------------------------------------------------------
         for name, model_obj in modelos_a_entrenar.items():
@@ -178,9 +219,14 @@ def run(institucion: int,sucursal:int,templateid:id):
                 # ------------------------------------------------------------
                 if hasattr(model_obj, "train_from_series"):
                     # le pasamos la serie DIARIA porque ya hiciste el aumento
+                    if vars_diarias is not None:
+                        df_in = pd.concat([x_diaria, vars_diarias], axis=1)
+                    else:
+                        df_in = x_diaria
                     t0 = time.perf_counter()
+                    print(df_in)
                     results = model_obj.train_from_series(
-                        x_diaria,
+                        df_in,
                         train_start=TRAIN_START,
                         train_end=TRAIN_END
                     )
@@ -229,12 +275,27 @@ def run(institucion: int,sucursal:int,templateid:id):
                 # ------------------------------------------------------------
                 else:
                     # 1) lags + split por FECHA fijo 2013-01 → 2024-01
-                    X_train, y_train, X_test, y_test, train_s, test_s = splitsTrainTest_from_series(
-                        serie_mensual,
-                        n_lags=3,
-                        train_start=TRAIN_START,
-                        train_end=TRAIN_END
-                    )
+                    # ¿hay variables pegadas?
+                    if df_modelo_mensual.shape[1] > 1:
+                        # hay cuenta + 1+ variables → usar el split multivariable
+                        X_train, y_train, X_test, y_test, train_s, test_s = splitsTrainTest_from_df(df_modelo_mensual,target_col=col,n_lags=3,train_start=TRAIN_START,train_end=TRAIN_END)
+                        # 2) guardar las ÚLTIMAS variables conocidas (hasta fin del train)
+                        ultimas_vars = (
+                            df_modelo_mensual
+                            .loc[:TRAIN_END]
+                            .iloc[-1]
+                            .drop(labels=[col])
+                            .values
+                        )
+                    else:
+                        # solo la cuenta → tu función de siempre
+                        X_train, y_train, X_test, y_test, train_s, test_s = splitsTrainTest_from_series(
+                            serie_mensual,
+                            n_lags=3,
+                            train_start=TRAIN_START,
+                            train_end=TRAIN_END
+                        )
+                        ultimas_vars=None
 
                     if len(X_train) == 0:
                         print(f"{name}: sin datos suficientes para entrenar → salto.")
@@ -308,7 +369,9 @@ def run(institucion: int,sucursal:int,templateid:id):
         if len(model_scores) > 0:
             plot_resultados_modelos(
                 model_scores,
-                titulo=f"Cuenta {col} — real vs modelos"
+                titulo=f"Cuenta {col} — real vs modelos",
+                plots_dir=plots_dir,
+                filename=f"cuenta_{col}_{var_names}_zoom.png"
             )
         if len(model_scores) > 0:
             # real mensual completa de esa cuenta
@@ -324,14 +387,23 @@ def run(institucion: int,sucursal:int,templateid:id):
             # por ejemplo si entrenaste TCNWrapper y lo guardaste:
             # test_index = tcn_wrapper.test_df.index
             # si no, puedes pasar None
+            '''
+            plot_cuenta_completa_vs__model_scores(
+                real_full=real_full,
+                model_scores=model_scores,
+                test_index=None,   # o el que sí tengas
+                titulo=f"Cuenta {col} — real vs modelos",
+            )
+            '''
             plot_serie_completa_con_model_scores(
                 real_full=real_full,
                 model_scores=model_scores,
                 test_index=None,   # o el que sí tengas
                 titulo=f"Cuenta {col} — real vs modelos",
                 plots_dir=plots_dir,                  # ← tu ruta existente
-                filename=f"cuenta_{col}.png",         # opcional
+                filename=f"cuenta_{col}_{var_names}.png",         # opcional
             )
+            
         cuenta_dir_matriz=crear_carpeta_cuenta(suc_matriz,col)
         if sucursal!=0:
             cuenta_dir=crear_carpeta_cuenta(suc_dir,col)
@@ -354,7 +426,14 @@ def run(institucion: int,sucursal:int,templateid:id):
             else:
                 print(f"#{rank} {name}: R2 = N/A")
 
-            nombre_modelo = f"{name}_{templateid}_{col}.joblib"
+            if var_names:  # hubo variables seleccionadas al inicio del run
+                # limpia nombres para que no metan espacios
+                clean_vars = [v.replace(" ", "").replace("/", "").replace("-", "") for v in var_names]
+                var_suffix = "__" + "_".join(clean_vars)
+            else:
+                var_suffix = ""
+
+            nombre_modelo = f"{name}_{templateid}_{col}_{var_suffix}.joblib"
 
             obj = fitted_wrappers.get(name) or tempmodels.get(name)
             if obj is None:
@@ -396,4 +475,4 @@ if __name__=="__main__":
     root_dir = f"./instituciones"
     os.makedirs(root_dir, exist_ok=True)  # crea ./instituciones/ si no existe
     # Llamar a la función principal
-    run(institucion,sucursal,templateid)
+    run(institucion,sucursal,templateid, var_idx=[0])

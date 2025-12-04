@@ -26,6 +26,8 @@ class HyperparameterLasso:
         self.best_model = None
         self.model = None
         self.best_params_ = None
+        self.default_ventana=3
+        self.default_flag_ventana=True
 
     def train(self, X_train, y_train):
         # escalar
@@ -72,22 +74,61 @@ class HyperparameterLasso:
             "best_params_": self.best_params_,
         }
 
-    def predecir_futuro(self, modelo=None, historial_inicial=None,
-                        meses_a_predecir=12, ventana=3, flag_ventana=True):
+    def predecir_futuro(self,
+                        modelo=None,
+                        historial_inicial=None,
+                        meses_a_predecir=12,
+                        ventana=None,
+                        flag_ventana=None,
+                        ultimas_vars=None):
+        """
+        Igual que el Linear que ya ajustaste:
+        - usa los últimos 'ventana' de la serie
+        - si el modelo fue entrenado con más columnas (variables), las pegamos al final
+        - usa los mismos scalers
+        """
         if modelo is None:
             modelo = self.model
         if modelo is None:
             raise ValueError("No hay modelo entrenado en el wrapper.")
 
-        hist = list(historial_inicial)
+        ventana = self.default_ventana if ventana is None else ventana
+        flag_ventana = self.default_flag_ventana if flag_ventana is None else flag_ventana
+
+        # historial de la serie en escala original
+        hist = list(map(float, np.ravel(historial_inicial)))
         preds = []
 
-        for _ in range(meses_a_predecir):
-            if flag_ventana:
-                entrada = np.array(hist[-ventana:]).reshape(1, -1)
-            else:
-                entrada = np.array([hist[-1]]).reshape(1, -1)
+        # cuántas features tenía X en train
+        n_feats_entreno = self.scaler_X.n_features_in_
 
+        for _ in range(meses_a_predecir):
+            # 1) parte autoregresiva
+            if flag_ventana:
+                entrada_serie = np.array(hist[-ventana:], float).reshape(1, -1)
+            else:
+                entrada_serie = np.array([hist[-1]], float).reshape(1, -1)
+
+            # 2) ¿entrenamos con más columnas?
+            if entrada_serie.shape[1] < n_feats_entreno:
+                faltan = n_feats_entreno - entrada_serie.shape[1]
+
+                if ultimas_vars is None:
+                    extras = np.zeros((1, faltan), float)
+                else:
+                    extras = np.array(ultimas_vars, float).reshape(1, -1)
+                    if extras.shape[1] > faltan:
+                        extras = extras[:, :faltan]
+                    elif extras.shape[1] < faltan:
+                        extras = np.concatenate(
+                            [extras, np.zeros((1, faltan - extras.shape[1]))],
+                            axis=1
+                        )
+                entrada = np.concatenate([entrada_serie, extras], axis=1)
+            else:
+                entrada = entrada_serie
+
+            # 3) escalar y predecir
             entrada_s = self.scaler_X.transform(entrada)
             yhat_s = modelo.predict(entrada_s)[0]
             yhat = self.scaler_y.inverse_transform([[yhat_s]])[0][0]
@@ -112,6 +153,8 @@ class HyperparameterLasso_PSO:
         self.best_model = None
         self.model = None
         self.best_params_ = None
+        self.default_ventana = 3
+        self.default_flag_ventana = True
 
     # función objetivo para PSO
     def _objective_function(self, alpha_array):
@@ -190,21 +233,49 @@ class HyperparameterLasso_PSO:
             "best_params_": self.best_params_,
         }
 
-    def predecir_futuro(self, modelo=None, historial_inicial=None,
-                        meses_a_predecir=12, ventana=3, flag_ventana=True):
+    def predecir_futuro(self,
+                        modelo=None,
+                        historial_inicial=None,
+                        meses_a_predecir=12,
+                        ventana=None,
+                        flag_ventana=None,
+                        ultimas_vars=None):
         if modelo is None:
             modelo = self.model
         if modelo is None:
             raise ValueError("No hay modelo entrenado en el wrapper.")
 
-        hist = list(historial_inicial)
+        ventana = self.default_ventana if ventana is None else ventana
+        flag_ventana = self.default_flag_ventana if flag_ventana is None else flag_ventana
+
+        hist = list(map(float, np.ravel(historial_inicial)))
         preds = []
+
+        n_feats_entreno = self.scaler_X.n_features_in_
 
         for _ in range(meses_a_predecir):
             if flag_ventana:
-                entrada = np.array(hist[-ventana:]).reshape(1, -1)
+                entrada_serie = np.array(hist[-ventana:], float).reshape(1, -1)
             else:
-                entrada = np.array([hist[-1]]).reshape(1, -1)
+                entrada_serie = np.array([hist[-1]], float).reshape(1, -1)
+
+            if entrada_serie.shape[1] < n_feats_entreno:
+                faltan = n_feats_entreno - entrada_serie.shape[1]
+
+                if ultimas_vars is None:
+                    extras = np.zeros((1, faltan), float)
+                else:
+                    extras = np.array(ultimas_vars, float).reshape(1, -1)
+                    if extras.shape[1] > faltan:
+                        extras = extras[:, :faltan]
+                    elif extras.shape[1] < faltan:
+                        extras = np.concatenate(
+                            [extras, np.zeros((1, faltan - extras.shape[1]))],
+                            axis=1
+                        )
+                entrada = np.concatenate([entrada_serie, extras], axis=1)
+            else:
+                entrada = entrada_serie
 
             entrada_s = self.scaler_X.transform(entrada)
             yhat_s = modelo.predict(entrada_s)[0]
