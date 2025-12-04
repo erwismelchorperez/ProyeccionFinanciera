@@ -9,13 +9,14 @@ __pycache__/
 *.csv#
 *.csv
 .pytest_cache/
-
+*.vscode
 *.png
 *.pkl
 # Model artifacts
 *.joblib
 *.dpkgl
-
+*.txt
+*.xlsx
 
 gitcommit
 *.dump

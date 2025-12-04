@@ -5,8 +5,8 @@ import json
 DB_PARAMS = {
     "host": "localhost",
     "port": 5432,
-    "dbname": "bdproyeccion",
-    "user": "antonio",
+    "dbname": "proyecciones",
+    "user": "postgres",
     "password": "proyecc10n35"
 }
 
