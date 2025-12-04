@@ -1,5 +1,4 @@
 import pandas as pd
-from src.data_loader_ import Loader
 import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
@@ -10,25 +9,9 @@ import sys
 import time
 import os
 import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
-from src.utils import (
-    read,
-    aumentar_columna_por_mes,
-    putTest_cuenta,
-    all_zero,
-    tiene_negativos,
-    ceros_iniciales,
-    choose_models,
-    aumentar_columna_por_mes_saltando_ceros_iniciales,
-    splitsTrainTest,
-    splitsTrainTest_from_series,
-    plot_resultados_modelos,
-    plot_modelos_alineados,
-    plot_serie_completa_con_model_scores,
-    normalizar_resultado_para_export,
-)
 from src.storage import crear_carpeta_cuenta,crear_carpeta_institucion,guardar_modelo
 from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
+#from src.db_mapeos import obtener_mapeo_codigos
 
 def run(institucion: int,sucursal:int,templateid:int):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
@@ -37,7 +20,25 @@ def run(institucion: int,sucursal:int,templateid:int):
     codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
     print("→ mapeo listo, total códigos:", len(codigo_to_id))
     print("---------------------------------------")
+    from src.data_loader_ import Loader
     #from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export
+    from src.utils import (
+        read,
+        aumentar_columna_por_mes,
+        putTest_cuenta,
+        all_zero,
+        tiene_negativos,
+        ceros_iniciales,
+        choose_models,
+        aumentar_columna_por_mes_saltando_ceros_iniciales,
+        splitsTrainTest,
+        splitsTrainTest_from_series,
+        plot_resultados_modelos,
+        plot_modelos_alineados,
+        plot_serie_completa_con_model_scores,
+        normalizar_resultado_para_export,
+    )
+    from sklearn.metrics import mean_squared_error
     from src.new_models.LSTM import LSTMWrapper
     from src.new_models.TCN import TCNWrapper
     from src.new_models.Linearmodel import HyperparameterLinear,HyperparameterLinear_PSO
