@@ -938,7 +938,7 @@ def plot_serie_completa_con_model_scores(
         print(f"[OK] gráfica guardada en: {save_path}")
 
     # mostrar igual
-    plt.show()
+    #plt.show()
 
 
 def plot_cuenta_completa_vs__model_scores(
@@ -1075,7 +1075,7 @@ def plot_resultados_modelos(res_dict, titulo="Comparación modelos",plots_dir: s
         save_path = os.path.join(plots_dir, filename)
         plt.savefig(save_path, dpi=150)
         print(f"[OK] gráfica guardada en: {save_path}")
-    plt.show()
+    #plt.show()
 
 def escalar(df_3por_mes):
     # 1) Preprocesado: SOLO asinh (acepta negativos)

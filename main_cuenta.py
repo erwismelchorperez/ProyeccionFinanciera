@@ -393,15 +393,15 @@ def run(institucion: int,sucursal:int,templateid:int):
             
             cuentaid = codigo_to_id.get(col)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{col}"
-            
+            print(cuentaid)
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,
                     modelo=nombre_modelo_bd,
                     ubicacion=ruta_modelo_matriz
                 )
-            
-        #break
+            else:
+                print("NO SE INSERTO EN BD")
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
