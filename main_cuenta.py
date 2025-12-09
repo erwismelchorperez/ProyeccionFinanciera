@@ -398,7 +398,7 @@ def run(institucion: int,sucursal:int,templateid:int):
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,
-                    sucursalod=sucursal,
+                    sucursalid=sucursal,
                     modelo=nombre_modelo_bd,
                     ubicacion=ruta_modelo_matriz
                 )
