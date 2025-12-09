@@ -402,7 +402,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                 )
             else:
                 print("NO SE INSERTO EN BD")
-            break
+        break
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
