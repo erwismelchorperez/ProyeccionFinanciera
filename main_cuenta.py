@@ -60,9 +60,9 @@ def run(institucion: int,sucursal:int,templateid:int):
     "LinearPSO": HyperparameterLinear_PSO(),
     "Ridge": HyperparameterRidge(),
     "RidgePSO": HyperparameterRidge_PSO(),
-    #"LSTM": LSTMWrapper(),
-    #"TCN": TCNWrapper(),     #
-    #"MLP": MLPSeriesWrapper()
+    "LSTM": LSTMWrapper(),
+    "TCN": TCNWrapper(),     #
+    "MLP": MLPSeriesWrapper()
     }
     proyeccionFinanciera=Loader("./dataset/Estados_FinancierosGaby_proyeccion.csv")
     proyeccionFinanciera.load_data()
@@ -393,8 +393,8 @@ def run(institucion: int,sucursal:int,templateid:int):
             
             cuentaid = codigo_to_id.get(col)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{col}"
-            print(col)
-            print(cuentaid)
+            #print(col)
+            #print(cuentaid)
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,
@@ -404,7 +404,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                 )
             else:
                 print("NO SE INSERTO EN BD")
-        break
+        #break
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
