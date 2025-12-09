@@ -44,7 +44,7 @@ for _, row in df.iterrows():
         TEMPLATE_ID,              # templateid = 19
         int(row["nivel"]),        # nivel del CSV
         TIPO_ID,                  # tipoid fijo (debe existir en tipocuenta)
-        str(row["codigo"]),       # codigo como texto (varchar(50))
+        int(row["codigo"]),       # codigo como texto (varchar(50))
         str(row["nombre"]),       # nombre
         proy                      # proyeccion (2 caracteres)
     ))
