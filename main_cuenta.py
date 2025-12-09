@@ -393,10 +393,12 @@ def run(institucion: int,sucursal:int,templateid:int):
             
             cuentaid = codigo_to_id.get(col)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{col}"
+            print(col)
             print(cuentaid)
             if cuentaid:
                 insertar_modelo(
                     cuentaid=cuentaid,
+                    sucursalod=sucursal,
                     modelo=nombre_modelo_bd,
                     ubicacion=ruta_modelo_matriz
                 )

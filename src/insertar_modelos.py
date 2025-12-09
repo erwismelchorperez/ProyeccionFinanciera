@@ -14,7 +14,7 @@ def get_connection():
     """Crea y retorna una conexión a la BD."""
     return psycopg.connect(**DB_PARAMS)
 
-def insertar_modelo(cuentaid: int, modelo: str, ubicacion: str, variables: dict = None):
+def insertar_modelo(cuentaid: int, sucursalid:int ,modelo: str, ubicacion: str, variables: dict = None):
     """
     Inserta un modelo en la tabla modelos.
     - cuentaid: id de la cuenta contable
@@ -27,10 +27,11 @@ def insertar_modelo(cuentaid: int, modelo: str, ubicacion: str, variables: dict 
 
     try:
         cur.execute("""
-            INSERT INTO modelos (cuentaid, modelo, ubicacion)
-            VALUES (%s, %s, %s)
+            INSERT INTO modelos (cuentaid, sucursalid, modelo, ubicacion)
+            VALUES (%s, %s, %s, %s)
         """, (
             cuentaid,
+            sucursalid,
             modelo,
             ubicacion,
         ))
