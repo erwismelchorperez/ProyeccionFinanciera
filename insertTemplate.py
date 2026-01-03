@@ -30,7 +30,7 @@ df["nivel"] = df["nivel"].astype(int)
 conn = psycopg.connect(**DB_PARAMS)
 cur = conn.cursor()
 
-TEMPLATE_ID = 19      # <<--- templateid que ya existe
+TEMPLATE_ID = 20      # <<--- templateid que ya existe
 TIPO_ID = 1           # tipocuentaid = 1
 
 # --- Insertar fila por fila ---

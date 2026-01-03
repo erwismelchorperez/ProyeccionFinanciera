@@ -64,7 +64,7 @@ def run(institucion: int,sucursal:int,templateid:int):
     "TCN": TCNWrapper(),     #
     "MLP": MLPSeriesWrapper()
     }
-    proyeccionFinanciera=Loader("./dataset/Estados_FinancierosGaby_proyeccion.csv")
+    proyeccionFinanciera=Loader("./dataset/dataset_con_proyeccion.csv")
     proyeccionFinanciera.load_data()
     #cuentas=[col for col in self.dataset_aumentado.columns if col!='date']
     dataset=proyeccionFinanciera.getDataset()
@@ -404,7 +404,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                 )
             else:
                 print("NO SE INSERTO EN BD")
-        #break
+        break
 
 if __name__=="__main__":
     # Validar que se pase un argumento entero
