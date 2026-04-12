@@ -238,18 +238,160 @@ class LSTMWrapper:
             "RMSE": rmse,
         }
 
+
+    def forecast_future_meses(self,
+                          x_diaria: pd.DataFrame,
+                          start_forecast: pd.Timestamp,
+                          meses_a_predecir: int):
+        """
+        Hace un forecast autoregresivo de `meses_a_predecir` meses
+        usando la MISMA escala que se usó para entrenar
+        (self.scaler, self.s, self.prediction_days).
+
+        x_diaria: serie diaria aumentada (la misma que pasas a train_from_series).
+        """
+        if self.model is None or self.scaler is None or self.s is None:
+            raise ValueError("Wrapper no entrenado. Llama antes a train_from_series.")
+
+        # 1) asegurar índice datetime
+        serie = x_diaria.iloc[:, 0].astype(float)
+        if not isinstance(serie.index, pd.DatetimeIndex):
+            serie.index = pd.to_datetime(serie.index)
+        serie = serie.sort_index()
+
+        # 2) tomar solo hasta el último día antes de start_forecast
+        serie_hist = serie.loc[: start_forecast - pd.Timedelta(days=1)]
+
+        # 3) función para ESCALAR igual que en el entrenamiento
+        #    (ajústala exactamente a tu escalar_asinh_vector / inverse_scale)
+        def scale_vals(vals: np.ndarray) -> np.ndarray:
+            arr = vals.reshape(-1, 1)
+            # mismo asinh que usaste antes
+            arr_asinh = np.arcsinh(arr / self.s)
+            arr_scaled = self.scaler.transform(arr_asinh)
+            return arr_scaled
+
+        def inverse_vals(vals_scaled: np.ndarray) -> np.ndarray:
+            # usa tu inverse_scale real si la tienes
+            from src.utils import inverse_scale
+            return inverse_scale(vals_scaled.reshape(-1, 1), self.s, self.scaler).ravel()
+
+        # 4) escalar TODO el histórico
+        hist_scaled = scale_vals(serie_hist.values)
+        lookback = self.prediction_days  # p.ej. 120
+
+        # ventana inicial: últimos `lookback` puntos escalados
+        if len(hist_scaled) < lookback:
+            raise ValueError("Serie histórica muy corta para la ventana del modelo.")
+        window = hist_scaled[-lookback:].copy().reshape(1, lookback, 1)
+
+        # 5) bucle autoregresivo diario
+        #    (puedes ajustar si quieres trabajar por meses directamente)
+        preds_scaled = []
+        last_date = serie_hist.index[-1]
+        # si tu aumento mensual agrega, p.ej., 21 días por mes:
+        dias_por_mes_aprox = 21
+        pasos_dias = meses_a_predecir * dias_por_mes_aprox
+
+        for _ in range(pasos_dias):
+            # TCN / LSTM usan (1, lookback, 1)
+            y_scaled = self.model.predict(window, verbose=0)
+            preds_scaled.append(y_scaled[0, 0])
+
+            # corrimiento de ventana: quitamos el primero y añadimos el nuevo
+            window = np.roll(window, shift=-1, axis=1)
+            window[0, -1, 0] = y_scaled[0, 0]
+
+            last_date = last_date + pd.Timedelta(days=1)
+
+        # 6) desescalar a unidad original
+        preds_scaled_arr = np.array(preds_scaled)
+        preds_original = inverse_vals(preds_scaled_arr)
+
+        # 7) construir índice diario futuro
+        idx_daily = pd.date_range(
+            start=serie_hist.index[-1] + pd.Timedelta(days=1),
+            periods=pasos_dias,
+            freq="D"
+        )
+
+        serie_future_daily = pd.Series(preds_original, index=idx_daily)
+
+        # 8) convertir a mensual (MS) y recortar a meses_a_predecir
+        serie_future_month = serie_future_daily.resample("MS").mean().iloc[:meses_a_predecir]
+
+        return {
+            "idx": serie_future_month.index,
+            "y_pred": serie_future_month.values,
+        }
+
+
     # ------------------------------------------------------------------
-    def predecir_futuro(self, *args, **kwargs):
+    def predecir_futuro(self,
+                        x_diaria: pd.DataFrame,
+                        start_forecast: pd.Timestamp,
+                        meses_a_predecir: int = 12,
+                        ventana: int = None,
+                        flag_ventana: bool = True):
         """
-        Para dejarlo compatible con tu pipeline: devolvemos lo mensual
-        que ya tenemos (como en TCN).
+        Forecast autoregresivo mensual usando el LSTM entrenado.
         """
-        if self.test_df is None or self.all_preds is None:
-            raise ValueError("Entrena primero el LSTMWrapper.")
-        avg_pred = np.mean(np.stack(self.all_preds, axis=0), axis=0)
-        pred_daily = pd.Series(np.asarray(avg_pred).ravel(), index=self.test_df.index)
-        pred_month = pred_daily.resample("MS").mean()
-        return pred_month.values
+        if self.model is None or self.scaler is None or self.s is None:
+            raise ValueError("LSTMWrapper no entrenado. Llama antes a train_from_series.")
+
+        from src.utils import inverse_scale
+
+        serie = x_diaria.iloc[:, 0].astype(float)
+        if not isinstance(serie.index, pd.DatetimeIndex):
+            serie.index = pd.to_datetime(serie.index)
+        serie = serie.sort_index()
+
+        serie_hist = serie.loc[: start_forecast - pd.Timedelta(days=1)]
+
+        def scale_vals(vals: np.ndarray) -> np.ndarray:
+            arr = vals.reshape(-1, 1)
+            arr_asinh = np.arcsinh(arr / self.s)
+            arr_scaled = self.scaler.transform(arr_asinh)
+            return arr_scaled
+
+        def inverse_vals(vals_scaled: np.ndarray) -> np.ndarray:
+            return inverse_scale(vals_scaled.reshape(-1, 1), self.s, self.scaler).ravel()
+
+        hist_scaled = scale_vals(serie_hist.values)
+        lookback = self.prediction_days
+
+        if len(hist_scaled) < lookback:
+            raise ValueError("Serie histórica muy corta para la ventana del LSTM.")
+
+        window = hist_scaled[-lookback:].copy().reshape(1, lookback, 1)
+
+        dias_por_mes_aprox = 21
+        pasos_dias = meses_a_predecir * dias_por_mes_aprox
+
+        preds_scaled = []
+        for _ in range(pasos_dias):
+            y_scaled = self.model.predict(window, verbose=0)
+            preds_scaled.append(y_scaled[0, 0])
+
+            window = np.roll(window, shift=-1, axis=1)
+            window[0, -1, 0] = y_scaled[0, 0]
+
+        preds_scaled_arr = np.array(preds_scaled)
+        preds_original = inverse_vals(preds_scaled_arr)
+
+        idx_daily = pd.date_range(
+            start=serie_hist.index[-1] + pd.Timedelta(days=1),
+            periods=pasos_dias,
+            freq="D"
+        )
+        serie_future_daily = pd.Series(preds_original, index=idx_daily)
+        serie_future_month = serie_future_daily.resample("MS").mean().iloc[:meses_a_predecir]
+
+        return {
+            "idx": serie_future_month.index,
+            "y_pred": serie_future_month.values
+        }
+
 
     # ------------------------------------------------------------------
     def plot(self, x, end_limit="2025-06-01"):

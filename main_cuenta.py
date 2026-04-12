@@ -12,15 +12,41 @@ import matplotlib.pyplot as plt
 from src.storage import crear_carpeta_cuenta,crear_carpeta_institucion,guardar_modelo
 from src.insertar_modelos import obtener_mapeo_codigos, insertar_modelo, get_connection
 #from src.db_mapeos import obtener_mapeo_codigos
+def extraer_pred_test_desde_wrapper(wrapper):
+    """
+    A partir de un wrapper TCNWrapper/LSTMWrapper/MLPSeriesWrapper entrenado,
+    reconstruye la serie REAL y PRED mensual en el tramo de TEST
+    (lo mismo que veías al entrenar).
+    """
+    if wrapper.test_df is None or wrapper.all_preds is None:
+        raise ValueError("wrapper no tiene test_df o all_preds. ¿Se entrenó con test?")
+
+    test_df = wrapper.test_df.copy()         # real diario en el tramo de test
+    all_preds = wrapper.all_preds            # lista de arrays de predicciones diarias
+
+    avg_pred = np.mean(np.stack(all_preds, axis=0), axis=0)
+
+    # series diarias
+    real_daily = test_df["Adj Close"]
+    pred_daily = pd.Series(np.asarray(avg_pred).ravel(), index=test_df.index)
+
+    # pasar a mensual
+    real_month = real_daily.resample("MS").mean()
+    pred_month = pred_daily.resample("MS").mean()
+
+    return real_month, pred_month
+
+
 
 def run(institucion: int,sucursal:int,templateid:int):
     suc_matriz,suc_dir,plots_dir=crear_carpeta_institucion(institucion,sucursal)
     #consulta
     print("INICIO")
-    codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
-    print("→ mapeo listo, total códigos:", len(codigo_to_id))
+    #codigo_to_id=obtener_mapeo_codigos(templateid) #codigos que pertenecen al templateid
+    #print("→ mapeo listo, total códigos:", len(codigo_to_id))
     print("---------------------------------------")
     from src.data_loader_ import Loader
+    from src.predecir import append_pred_test_a_csv
     #from src.utils import read,aumentar_columna_por_mes,putTest_cuenta,all_zero,tiene_negativos,ceros_iniciales,choose_models,aumentar_columna_por_mes_saltando_ceros_iniciales,splitsTrainTest,splitsTrainTest_from_series,plot_resultados_modelos,plot_modelos_alineados,plot_serie_completa_con_model_scores,normalizar_resultado_para_export
     from src.utils import (
         read,
@@ -37,6 +63,8 @@ def run(institucion: int,sucursal:int,templateid:int):
         plot_modelos_alineados,
         plot_serie_completa_con_model_scores,
         normalizar_resultado_para_export,
+        plot_real_vs_pred_monthly,
+        plot_real_vs_model_scores
     )
     from sklearn.metrics import mean_squared_error
     from src.new_models.LSTM import LSTMWrapper
@@ -47,42 +75,48 @@ def run(institucion: int,sucursal:int,templateid:int):
     from src.new_models.ZeroInflatedPoissonWrapper import ZeroInflatedPoissonWrapper
     from src.new_models.Lasso import HyperparameterLasso,HyperparameterLasso_PSO
     from src.new_models.MLP import MLPSeriesWrapper
+    from src.new_models.MLP import MLPMonthlyWrapper
     from src.new_models.TwoPart import TwoPartHurdleWrapper
     from src.new_models.LightGBM import LightGBM_TweedieSeriesWrapper
     from src.resumen import exportar_predicciones_y_resumen,exportar_predicciones_y_resumen_solo_mejor
     models = {
     #"ZeroInflatedPoisson": ZeroInflatedPoissonWrapper(),
-    "Lightgbm": LightGBM_TweedieSeriesWrapper(),
-    "TwoPart": TwoPartHurdleWrapper(nonzero_label=True),
-    "Lasso": HyperparameterLasso(),
-    "LassoPSO": HyperparameterLasso_PSO(),
-    "Linear": HyperparameterLinear(),
-    "LinearPSO": HyperparameterLinear_PSO(),
-    "Ridge": HyperparameterRidge(),
-    "RidgePSO": HyperparameterRidge_PSO(),
-    "LSTM": LSTMWrapper(),
+    #"Lightgbm": LightGBM_TweedieSeriesWrapper(),
+    #"TwoPart": TwoPartHurdleWrapper(nonzero_label=True),
+    #"Lasso": HyperparameterLasso(),
+    #"LassoPSO": HyperparameterLasso_PSO(),
+    #"Linear": HyperparameterLinear(),
+    #"LinearPSO": HyperparameterLinear_PSO(),
+    #"Ridge": HyperparameterRidge(),
+    #"RidgePSO": HyperparameterRidge_PSO(),
+    #"LSTM": LSTMWrapper(),
     "TCN": TCNWrapper(),     #
-    "MLP": MLPSeriesWrapper()
+    #"MLP": MLPSeriesWrapper(),
+    #"MLPMo": MLPSeriesWrapper(),
     }
-    proyeccionFinanciera=Loader("./dataset/dataset_con_proyeccion.csv")
+    proyeccionFinanciera=Loader("./dataset/Crediguate.csv")
     proyeccionFinanciera.load_data()
     #cuentas=[col for col in self.dataset_aumentado.columns if col!='date']
     dataset=proyeccionFinanciera.getDataset()
     df_num = dataset.apply(pd.to_numeric, errors="coerce").fillna(0.0)
     
     # rangos fijos que quieres usar
-    TRAIN_START = pd.Timestamp("2013-01-01")
-    TRAIN_END   = pd.Timestamp("2024-01-01")
+    TRAIN_START = pd.Timestamp("2015-03-01")
+    TRAIN_END   = pd.Timestamp("2025-03-01")
 
     # predecir desde 2024-02 hasta 2025-03 → son 15 meses
-    TEST_START = pd.Timestamp("2024-02-01")
-    TEST_END   = pd.Timestamp("2025-03-01")
-    FUTURE_H=15
+    TEST_START = pd.Timestamp("2025-04-01")
+    TEST_END   = pd.Timestamp("2025-11-01")
+    FUTURE_H=36 #FUTURE_H=15
+    meses_objetivos=36 #para all_zero_val, normalmente 15 meses
     df_mensual = df_num.copy()
     if not isinstance(df_mensual.index, pd.DatetimeIndex):
         df_mensual.index = pd.to_datetime(df_mensual.index)
     df_mensual = df_mensual.asfreq("MS").sort_index()  # mensual (Month Start)
-    forecast_end = dt.datetime(2025, 3, 1)  # predecir hasta 2025-03 (inclusive)
+    forecast_start = TRAIN_END + pd.offsets.MonthBegin(1)  # 2024-04-01
+    forecast_end   = forecast_start + pd.DateOffset(months=FUTURE_H - 1)
+    forecast_idx = pd.date_range(TEST_START, periods=FUTURE_H, freq="MS")
+    #forecast_end = dt.datetime(2027, 3, 1)  # predecir hasta 2025-03 (inclusive)
 
     # todas las cuentas:
     cols = df_mensual.columns.astype(str).tolist()
@@ -92,7 +126,7 @@ def run(institucion: int,sucursal:int,templateid:int):
     s_map = {}
     splits = {}
     train_ratio = 0.8
-    output_xlsx ="predicciones_V3.xlsx"
+    output_xlsx ="predicciones_Crediguate.xlsx"
     for col in cols:
         # 1) inicializa los contenedores PARA ESTA CUENTA
         model_scores     = {}   # métricas de cada modelo
@@ -127,7 +161,7 @@ def run(institucion: int,sucursal:int,templateid:int):
             real_tramo_df = real_cuenta.loc[TEST_START:TEST_END].copy()
             if real_tramo_df.empty:
                 # si no hay ese rango, toma últimos 15 meses del DF
-                real_tramo_df = real_cuenta.iloc[-15:].copy()
+                real_tramo_df = real_cuenta.iloc[-meses_objetivos:].copy()
 
             # ahora sí, esto es un DF con col "real"
             y_true = real_tramo_df["real"].values.astype(float)
@@ -152,8 +186,8 @@ def run(institucion: int,sucursal:int,templateid:int):
                 real_full=real_cuenta,            # DF con columna 'real'
                 model_scores=model_scores,
                 output_path=output_xlsx,
-                meses_objetivo=15,
-                real_desde="2024-02-01",
+                meses_objetivo=meses_objetivos,
+                real_desde="2024-04-01",
             )
             # pasar a la siguiente cuenta
             continue
@@ -201,15 +235,20 @@ def run(institucion: int,sucursal:int,templateid:int):
                 # ------------------------------------------------------------
                 if hasattr(model_obj, "train_from_series"):
                     # le pasamos la serie DIARIA porque ya hiciste el aumento
+                    df_in=x_diaria
                     t0 = time.perf_counter()
                     results = model_obj.train_from_series(
-                        x_diaria,
+                        df_in,
                         train_start=TRAIN_START,
-                        train_end=TRAIN_END
+                        train_end=TRAIN_END,
+                        colname=col,
+                        test_start=TEST_START,
+                        test_end=TEST_END,
                     )
                     t1 = time.perf_counter()
                     train_time = t1 - t0
-
+                     # --- 1) guarda "crudo" para debug antes de normalizar ---
+                    results_raw = dict(results)
                     # results ya trae y_true / y_pred / MSE / RMSE 
                     results = {
                         **results,
@@ -220,33 +259,108 @@ def run(institucion: int,sucursal:int,templateid:int):
                     norm = normalizar_resultado_para_export(
                         results,
                         real_cuenta,
-                        meses_objetivo=15
+                        meses_objetivo=meses_objetivos,
+                        forecast_start=TEST_START
                     )
                     results["norm"] = norm
 
                     model_scores[name] = results
+                    idx = norm["idx"]
+                    print(
+                        f"Cuenta {col} / Modelo {name}: "
+                        f"predice {len(idx)} meses, desde {idx[0].date()} hasta {idx[-1].date()}"
+                    )
+
 
                     #model_scores[name] = results
 
                     # guarda el wrapper ya entrenado
-                    fitted_wrappers[name] = model_obj
+                    #fitted_wrappers[name] = model_obj
 
                     # para serializar el modelo keras dentro:
-                    if hasattr(model_obj, "model"):
-                        tempmodels[name] = model_obj.model
+                    #if hasattr(model_obj, "model"):
+                    #    tempmodels[name] = model_obj.model
 
-                    # predicción futura 15 meses (si la clase la tiene)
+
+                    # ==============================
                     if hasattr(model_obj, "predecir_futuro"):
                         try:
-                            fut = model_obj.predecir_futuro(
-                                meses_a_predecir=FUTURE_H,
+                            fut_dict = model_obj.predecir_futuro(
+                                x_diaria=df_in,
+                                start_forecast=TEST_START,   # 2024-04-01
+                                meses_a_predecir=FUTURE_H,   # 57
                                 ventana=getattr(model_obj, "default_ventana", 3),
                                 flag_ventana=getattr(model_obj, "default_flag_ventana", True),
                             )
-                            results["future_pred"] = fut
+                            fut_idx  = pd.to_datetime(fut_dict["idx"])
+                            fut_vals = np.asarray(fut_dict["y_pred"], float).ravel()
+
+                            # normalizar/alinéar el forecast vs serie real mensual
+                            def normalizar_forecast_para_export(f_idx, f_vals, real_full, meses_objetivo):
+                                # 1) index a datetime mensual (Month Start)
+                                idx = pd.DatetimeIndex(pd.to_datetime(f_idx))
+                                if idx.freq is None:
+                                    # si no trae freq, lo pasamos a periodo mensual y de vuelta a timestamp (inicio de mes)
+                                    idx = idx.to_period("M").to_timestamp("MS")
+                                idx = idx.sort_values()
+
+                                # 2) recortar a meses_objetivo
+                                y_pred = np.asarray(f_vals, float).ravel()
+                                m = min(len(idx), len(y_pred), meses_objetivo)
+                                idx = idx[:m]
+                                y_pred = y_pred[:m]
+
+                                # 3) alinear contra la serie real mensual (puede haber NaN en el futuro)
+                                real_m = real_full["real"].asfreq("MS")
+                                y_true = real_m.reindex(idx).values
+
+                                return {"idx": idx, "y_pred": y_pred, "y_true": y_true}
+
+                            norm_forecast = normalizar_forecast_para_export(
+                                fut_idx, fut_vals, real_cuenta, meses_objetivo=FUTURE_H
+                            )
+                            results["future_idx"]  = norm_forecast["idx"]
+                            results["future_pred"] = norm_forecast["y_pred"]
+
+                            print(
+                                f"[FORECAST] {name}/{col}: {len(results['future_idx'])} meses "
+                                f"{results['future_idx'][0].date()} → {results['future_idx'][-1].date()}"
+                            )
+
+                            # --- 4) gráficos (opcional) ---
+                            # A) Una sola curva (este modelo) con el forecast
+                            plot_real_vs_pred_monthly(
+                                real_full=real_cuenta,
+                                pred_idx=results["future_idx"],
+                                pred_vals=results["future_pred"],
+                                title=f"Cuenta {col} — Predicción {FUTURE_H}m vs Real",
+                                train_end=TRAIN_END
+                            )
+
+                            # B) Todos los modelos: si quieres ver TEST normalizado
+                            plot_real_vs_model_scores(
+                                real_full=real_cuenta,
+                                model_scores=model_scores,
+                                title=f"Cuenta {col} — Modelos vs Real (TEST)",
+                                prefer_future=False,   # usa res['norm']
+                                only_overlap=True
+                            )
+
+                            # C) Todos los modelos: vista a futuro si varios traen forecast
+                            plot_real_vs_model_scores(
+                                real_full=real_cuenta,
+                                model_scores=model_scores,
+                                title=f"Cuenta {col} — Modelos vs Real (FUTURO {FUTURE_H}m)",
+                                prefer_future=True
+                            )
+
                         except Exception as e:
                             print(f"{name}: no pude predecir futuro: {e}")
 
+                    # guardar wrapper/keras para serializar
+                    fitted_wrappers[name] = model_obj
+                    if hasattr(model_obj, "model"):
+                        tempmodels[name] = model_obj.model
                 # ------------------------------------------------------------
                 # CASO B: modelo clásico con lags
                 # ------------------------------------------------------------
@@ -291,7 +405,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                     norm = normalizar_resultado_para_export(
                         results,
                         real_cuenta,
-                        meses_objetivo=15
+                        meses_objetivo=meses_objetivos
                     )
                     results["norm"] = norm
 
@@ -341,6 +455,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                 real_full=real_cuenta,
                 model_scores=model_scores,
                 output_path=output_xlsx,
+                meses_objetivo=meses_objetivos
             )
 
             # si tienes el index del tramo de test (del TCN o del split)
@@ -390,8 +505,18 @@ def run(institucion: int,sucursal:int,templateid:int):
             if sucursal != 0:
                 ruta_sucursal = os.path.join(cuenta_dir, nombre_modelo)
                 joblib.dump(obj, ruta_sucursal, compress=3)
-            
-            cuentaid = codigo_to_id.get(col)
+            if seleccion:
+                best_name, best_metrics = seleccion[0]
+
+                append_pred_test_a_csv(
+                    codigo=col,
+                    modelo_nombre=best_name,
+                    df_mensual=df_mensual,
+                    results=best_metrics,
+                    horizonte=FUTURE_H,           # 57
+                    path_salida_csv="prediccion.csv",
+                )
+            '''cuentaid = codigo_to_id.get(col)
             nombre_modelo_bd=f"modelo{rank}_{templateid}_{col}"
             #print(col)
             #print(cuentaid)
@@ -404,6 +529,7 @@ def run(institucion: int,sucursal:int,templateid:int):
                 )
             else:
                 print("NO SE INSERTO EN BD")
+            '''
         break
 
 if __name__=="__main__":

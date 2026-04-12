@@ -17,7 +17,19 @@ from inspect import isfunction
 import sys, subprocess
 import os
 
-MESES_ES = {1:'ene',2:'feb',3:'mar',4:'abr',5:'may',6:'jun',7:'jul',8:'ago',9:'sep',10:'oct',11:'nov',12:'dic'}
+MESES_ES = {1:'ene',
+            2:'feb',
+            3:'mar',
+            4:'abr',
+            5:'may',
+            6:'jun',
+            7:'jul',
+            8:'ago',
+            9:'sep',
+            10:'oct',
+            11:'nov',
+            12:'dic',
+            }
 #VARIABLES
 def leer_variables(ruta: str) -> pd.DataFrame:
     """
@@ -59,6 +71,114 @@ def leer_variables(ruta: str) -> pd.DataFrame:
 
     return df
 
+
+def plot_real_vs_pred_monthly(
+    real_full: pd.DataFrame | pd.Series,
+    pred_idx: pd.DatetimeIndex,
+    pred_vals: np.ndarray,
+    title: str = "Predicción vs Real",
+    train_end: pd.Timestamp | None = None,
+):
+    """
+    real_full: DF con una columna (p. ej. {'real'}) o Serie mensual (freq MS)
+    pred_idx: índice mensual de la predicción (MS)
+    pred_vals: vector con las predicciones alineadas a pred_idx
+    train_end: si lo pasas, dibuja una línea vertical de corte de entrenamiento
+    """
+    # --- serie real (mensual) ---
+    if isinstance(real_full, pd.DataFrame):
+        if real_full.shape[1] != 1:
+            raise ValueError("real_full debe tener una sola columna.")
+        real_series = real_full.iloc[:, 0]
+    else:
+        real_series = real_full
+    if not isinstance(real_series.index, pd.DatetimeIndex):
+        real_series.index = pd.to_datetime(real_series.index)
+    real_series = real_series.asfreq("MS").sort_index()
+
+    # --- alinear rango a lo que pronostraste ---
+    real_sub = real_series.loc[pred_idx.min(): pred_idx.max()]
+
+    # --- plot ---
+    plt.figure(figsize=(13, 5))
+    plt.plot(real_sub.index, real_sub.values, label="Real", linewidth=1.8)
+    plt.plot(pred_idx, np.asarray(pred_vals).ravel(), label="Predicción", linewidth=1.8)
+    if train_end is not None:
+        plt.axvline(train_end, linestyle="--", linewidth=1.0, label="Fin train")
+    plt.title(title)
+    plt.xlabel("Fecha")
+    plt.ylabel("Valor")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_real_vs_model_scores(
+    real_full: pd.DataFrame | pd.Series,
+    model_scores: dict,
+    title: str = "Predicción vs Real (varios modelos)",
+    prefer_future: bool = True,
+    only_overlap: bool = True,   # recorta al solape real-idx del modelo
+):
+    # --- serie real mensual ---
+    if isinstance(real_full, pd.DataFrame):
+        if real_full.shape[1] != 1:
+            raise ValueError("real_full debe tener una sola columna.")
+        real_series = real_full.iloc[:, 0]
+    else:
+        real_series = real_full
+
+    if not isinstance(real_series.index, pd.DatetimeIndex):
+        real_series.index = pd.to_datetime(real_series.index)
+    real_series = real_series.asfreq("MS").sort_index()
+
+    plt.figure(figsize=(13, 5))
+    plt.plot(real_series.index, real_series.values, label="Real", linewidth=1.8)
+
+    for name, res in model_scores.items():
+        idx = vals = None
+
+        if not prefer_future:
+            # 1) comparar en TEST (normalizado) si está disponible
+            norm = res.get("norm")
+            if norm is not None and "idx" in norm and "y_pred" in norm:
+                idx = pd.to_datetime(norm["idx"])
+                vals = np.asarray(norm["y_pred"]).ravel()
+        # si no hay norm o preferimos forecast, vamos a futuro
+        if idx is None or vals is None:
+            if prefer_future and ("future_idx" in res) and ("future_pred" in res):
+                idx = pd.to_datetime(res["future_idx"])
+                vals = np.asarray(res["future_pred"]).ravel()
+            elif ("idx" in res) and ("y_pred" in res):
+                # usando el idx/y_pred del resultado del test del modelo
+                idx = pd.to_datetime(res["idx"])
+                vals = np.asarray(res["y_pred"]).ravel()
+            else:
+                # no hay nada graficable
+                continue
+
+        # recorte a solape (para que “se parezca” en escala y tramo)
+        if only_overlap:
+            idx_m = pd.DatetimeIndex(idx)
+            start = max(real_series.index.min(), idx_m.min())
+            end   = min(real_series.index.max(), idx_m.max())
+            mask  = (idx_m >= start) & (idx_m <= end)
+            if mask.sum() == 0:
+                print(f"[INFO] {name}: sin solape con serie real; se dibuja fuera del rango.")
+            else:
+                idx = idx_m[mask]
+                vals = vals[-mask.sum():] if len(vals) != mask.sum() else vals[mask]
+
+        plt.plot(idx, vals, label=name, linewidth=1.6)
+
+    plt.title(title)
+    plt.xlabel("Fecha")
+    plt.ylabel("Valor")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 def splitsTrainTest_from_df(df: pd.DataFrame,
                             target_col: str,
@@ -142,8 +262,24 @@ def drop_cols(df, cols):
 
 
 # --- Parser robusto de etiquetas mensuales ---
-_MES_MAP = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
-            "jul":7,"ago":8,"sep":9,"oct":10,"nov":11,"dic":12}
+_MES_MAP = {"ene":1,
+            "feb":2,
+            "mar":3,
+            "abr":4,
+            "may":5,
+            "jun":6,
+            "jul":7,
+            "ago":8,
+            "sep":9,
+            "oct":10,
+            "nov":11,
+            "dic":12,
+            # Inglés (para encabezados tipo 'apr-15', 'aug-20', 'dec-24', 'jan-25')
+            "jan": 1,
+            "apr": 4,
+            "aug": 8,
+            "dec": 12,
+            }
 
 def normalizarEncabezados(df):
     df.columns = (df.columns
@@ -759,7 +895,8 @@ import pandas as pd
 
 def normalizar_resultado_para_export(results: dict,
                                      df_real: pd.DataFrame,
-                                     meses_objetivo: int = 15):
+                                     meses_objetivo: int = 15,
+                                     forecast_start:pd.Timestamp | None=None):
     """
     Normaliza el dict que devolvió un modelo para que SIEMPRE tenga:
       - y_true: np.array de largo N
@@ -786,31 +923,59 @@ def normalizar_resultado_para_export(results: dict,
     y_true = y_true[:n]
     y_pred = y_pred[:n]
 
-    # 3) queremos como mucho `meses_objetivo` (p.ej. 15 meses: 2024-02 → 2025-04)
+    # 3) limitar por meses_objetivo ,queremos como mucho `meses_objetivo` (p.ej. 15 meses: 2024-02 → 2025-04)
     n = min(n, meses_objetivo)
     y_true = y_true[:n]
     y_pred = y_pred[:n]
 
     # 4) construir índice de fechas desde el real
     # df_real debe tener índice datetime mensual
-    real_series = df_real.iloc[:, 0]
-    if not isinstance(real_series.index, pd.DatetimeIndex):
-        real_series.index = pd.to_datetime(real_series.index)
-    real_series = real_series.asfreq("MS")
-
-    # tomamos los ÚLTIMOS n meses del real
-    if len(real_series) >= n:
-        idx = real_series.index[-n:]
+    if forecast_start is not None:
+        # índice artificial empezando en forecast_start
+        idx = pd.date_range(start=forecast_start, periods=n, freq="MS")
     else:
-        # fallback: generar fechas sintéticas
-        idx = pd.date_range(start="2000-01-01", periods=n, freq="MS")
-
+        real_series = df_real.iloc[:, 0]
+        if not isinstance(real_series.index, pd.DatetimeIndex):
+            real_series.index = pd.to_datetime(real_series.index)
+        real_series = real_series.asfreq("MS")
+        # tomamos los ÚLTIMOS n meses del real
+        if len(real_series) >= n:
+            idx = real_series.index[-n:]
+        else:
+            # fallback: generar fechas sintéticas
+            idx = pd.date_range(start="2000-01-01", periods=n, freq="MS")
     return {
         "y_true": y_true,
         "y_pred": y_pred,
         "idx": idx,
     }
 
+
+
+def plot_real_vs_future(serie_real, idx_future, future_pred,
+                        titulo="Real vs Pronóstico",
+                        save_path=None,
+                        show=True):
+    plt.figure(figsize=(12, 5))
+    plt.plot(serie_real.index, serie_real.values, label="Real")
+    plt.plot(idx_future, future_pred, label="Pronóstico futuro")
+    plt.title(titulo)
+    plt.xlabel("Fecha")
+    plt.ylabel("Valor")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+
+    if save_path is not None:
+        # crear carpeta si no existe
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"[OK] Gráfica guardada en: {save_path}")
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
 def splitsTrainTest_from_series(serie_mensual: pd.Series,
                                 n_lags: int = 3,
@@ -898,18 +1063,22 @@ def plot_serie_completa_con_model_scores(
     for i, (name, res) in enumerate(model_scores.items()):
         if "y_pred" not in res:
             continue
-        y_pred = np.asarray(res["y_pred"]).ravel()
-
-        # usar índice de test si lo tienes
-        if test_index is not None:
-            m = min(len(test_index), len(y_pred))
-            idx = test_index[:m]
-            vals = y_pred[:m]
+        # Si el modelo tiene 'norm', usamos ese índice normalizado
+        norm = res.get("norm")
+        if norm is not None and "idx" in norm:
+            idx = norm["idx"]
+            vals = np.asarray(norm["y_pred"]).ravel()
         else:
-            # si no, lo pegamos al final del real
-            m = min(len(real_series), len(y_pred))
-            idx = real_series.index[-m:]
-            vals = y_pred[-m:]
+            # # usar índice de test si lo tienes
+            y_pred = np.asarray(res["y_pred"]).ravel()
+            if test_index is not None:
+                m = min(len(test_index), len(y_pred))
+                idx = test_index[:m]
+                vals = y_pred[:m]
+            else:
+                m = min(len(real_series), len(y_pred))
+                idx = real_series.index[-m:]
+                vals = y_pred[-m:]
 
         plt.plot(
             idx,

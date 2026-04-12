@@ -1,7 +1,7 @@
 import pandas as pd
 
 # 1. Leer el archivo CSV
-df = pd.read_csv("./dataset/BD 2015_2021 Crediguate.csv")
+df = pd.read_csv("./dataset/Crediguate_actualizado.csv")
 
 niveles = df["NIVEL"].tolist()
 n = len(niveles)
@@ -31,6 +31,6 @@ cols_after = df.columns[proy_index + 1:]   # columnas posteriores
 df[cols_after] = df[cols_after].fillna(0)
 
 # 5. Guardar el archivo
-df.to_csv("dataset_con_proyeccion.csv", index=False)
+df.to_csv("Cre_actualizado_mensual.csv", index=False)
 
-print("Archivo generado: dataset_con_proyeccion.csv")
+print("Archivo generado: Cre_actualizado_mensual.csv")
